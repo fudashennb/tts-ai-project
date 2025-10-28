@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.dist/
+.build/
+*.log
+.pytest_cache/
+.mypy_cache/
+.cache/
+
+# 虚拟环境/IDE
+.venv/
+venv/
+env/
+.idea/
+.vscode/
+
+# 数据与临时
+logs/
+ai_responses/
+temp_vad_recording_*.wav
+
+# 保留重要文件：main.db3 和 music/*.wav
+# 这些文件将通过 Git LFS 管理
