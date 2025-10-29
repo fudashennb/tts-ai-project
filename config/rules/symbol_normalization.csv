@@ -1,0 +1,14 @@
+rule_id,rule_type,original,replacement,priority,enabled,description
+1,percentage,％,%,1,TRUE,全角百分号转半角
+2,decimal,．,.,1,TRUE,全角小数点转半角
+3,digit,０,0,2,TRUE,全角数字0
+4,digit,１,1,2,TRUE,全角数字1
+5,digit,２,2,2,TRUE,全角数字2
+6,digit,３,3,2,TRUE,全角数字3
+7,digit,４,4,2,TRUE,全角数字4
+8,digit,５,5,2,TRUE,全角数字5
+9,digit,６,6,2,TRUE,全角数字6
+10,digit,７,7,2,TRUE,全角数字7
+11,digit,８,8,2,TRUE,全角数字8
+12,digit,９,9,2,TRUE,全角数字9
+

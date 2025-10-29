@@ -1,0 +1,17 @@
+abbr_id,abbreviation,tts_format,enabled,description
+1,AGV,A G V,TRUE,自动引导车
+2,AMR,A M R,TRUE,自主移动机器人
+3,PLC,P L C,TRUE,可编程逻辑控制器
+4,WMS,W M S,TRUE,仓库管理系统
+5,ERP,E R P,TRUE,企业资源计划
+6,MES,M E S,TRUE,制造执行系统
+7,RFID,R F I D,TRUE,射频识别
+8,GPS,G P S,TRUE,全球定位系统
+9,AI,A I,TRUE,人工智能
+10,IoT,I o T,TRUE,物联网
+11,API,A P I,TRUE,应用程序接口
+12,URL,U R L,TRUE,统一资源定位符
+13,ID,I D,TRUE,标识符
+14,VIP,V I P,TRUE,重要人物
+15,CEO,C E O,TRUE,首席执行官
+

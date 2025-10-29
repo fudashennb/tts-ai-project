@@ -1,0 +1,508 @@
+"""
+文本处理器 - 数字和百分比处理
+
+功能：
+1. 符号标准化（全角转半角）
+2. 编号识别（关键词距离判断）
+3. 数字转中文（支持万、亿）
+4. 小数处理（四舍五入、逐位朗读）
+5. 百分比处理
+
+设计理念：
+- 配置驱动：所有规则从CSV读取
+- 易于扩展：添加新规则只需修改CSV
+- 职责单一：每个方法只做一件事
+"""
+
+import re
+import logging
+from typing import Dict, List, Tuple, Optional
+from config.config_loader import get_config_loader
+
+_logger = logging.getLogger(__name__)
+
+
+class TextProcessor:
+    """文本处理器"""
+    
+    def __init__(self):
+        """初始化"""
+        self.config_loader = get_config_loader()
+        
+        # 配置缓存
+        self.symbol_rules = []
+        self.identifier_keywords = []
+        self.number_config = {}
+        
+        # 加载配置
+        self._load_configs()
+    
+    def _load_configs(self):
+        """加载所有配置"""
+        try:
+            # 符号标准化规则
+            self.symbol_rules = self.config_loader.get_enabled_items('symbol_normalization')
+            
+            # 编号关键词
+            self.identifier_keywords = self.config_loader.get_enabled_items('number_identifier_keywords')
+            
+            # 口语数字标准化规则（新增）
+            self.spoken_digit_rules = self.config_loader.get_enabled_items('spoken_normalization')
+            
+            # 数字处理配置
+            self.number_config = {
+                'decimal_places': self.config_loader.get_config_value('number_processing_config', 'decimal_places', 2),
+                'enable_wan_yi': self.config_loader.get_config_value('number_processing_config', 'enable_wan_yi', True),
+                'percentage_allow_space': self.config_loader.get_config_value('number_processing_config', 'percentage_allow_space', True),
+                'keyword_max_search_chars': self.config_loader.get_config_value('number_processing_config', 'keyword_max_search_chars', 10),
+            }
+            
+            _logger.info(f"✅ 文本处理器配置加载完成: {len(self.symbol_rules)}条符号规则, {len(self.identifier_keywords)}个关键词, {len(self.spoken_digit_rules)}条口语规则")
+        
+        except Exception as e:
+            _logger.error(f"❌ 加载配置失败: {e}")
+    
+    def reload_configs(self):
+        """重新加载配置"""
+        self.config_loader.reload_all()
+        self._load_configs()
+    
+    def normalize_symbols(self, text: str) -> str:
+        """
+        符号标准化：全角转半角
+        
+        处理：％ → %, ０ → 0, １ → 1, 等
+        """
+        result = text
+        
+        for rule in self.symbol_rules:
+            original = rule.get('original', '')
+            replacement = rule.get('replacement', '')
+            if original and replacement:
+                result = result.replace(original, replacement)
+        
+        return result
+    
+    def normalize_spoken_digits(self, text: str) -> str:
+        """
+        口语数字标准化：将口语数字转换为标准数字（基于上下文判断）
+        
+        处理：
+        - "编号幺三零七" → "编号一三零七"
+        - "洞拐勾" → "零七九"（在数字上下文）
+        - "幺蛾子" → "幺蛾子"（保持不变，非数字上下文）
+        
+        参数:
+            text: 原始文本
+        
+        返回:
+            处理后的文本
+        """
+        if not text:
+            return text
+        
+        result = text
+        
+        # 获取所有口语数字词
+        spoken_words = {rule['spoken_word']: rule['standard_word'] 
+                       for rule in self.spoken_digit_rules}
+        
+        if not spoken_words:
+            return result
+        
+        # 构建所有数字字符集合（用于上下文判断）
+        digit_chars = set('0123456789零一二三四五六七八九十')
+        digit_chars.update(spoken_words.keys())  # 添加口语数字本身
+        
+        # 编号关键词（用于上下文判断）
+        number_keywords = {kw['keyword'] for kw in self.identifier_keywords}
+        
+        # 量词关键词（用于排除非数字上下文）
+        quantifier_words = {'个', '只', '件', '条', '位', '名', '人', '次', '遍', '回', '趟'}
+        
+        def is_digit_context(text: str, pos: int) -> bool:
+            """
+            判断位置pos的字符是否在数字上下文中
+            
+            判断规则：
+            1. 前方有编号关键词
+            2. 前后有数字字符（0-9或中文数字）
+            3. 前后有其他口语数字
+            4. 前方有"第"等序数词
+            
+            排除规则：
+            1. 后面紧跟量词（如"两个"）
+            """
+            # 获取前后文本（各取5个字符）
+            search_range = 5
+            start = max(0, pos - search_range)
+            end = min(len(text), pos + search_range + 1)
+            before = text[start:pos]
+            after = text[pos + 1:end]
+            
+            # 获取当前字符
+            current_char = text[pos]
+            
+            # 排除规则：检查是否是量词用法
+            # 如"两个"、"俩人"等
+            if current_char in ['两', '俩']:
+                # 检查后面1-2个字符
+                next_chars = text[pos + 1:pos + 3]
+                for qw in quantifier_words:
+                    if next_chars.startswith(qw):
+                        _logger.debug(f"🚫 排除量词用法: '{text[pos:pos+3]}'")
+                        return False
+            
+            # 检查前方是否有编号关键词
+            for keyword in number_keywords:
+                if keyword in before:
+                    _logger.debug(f"✅ 检测到编号关键词: '{keyword}'")
+                    return True
+            
+            # 检查前方是否有"第"（序数词）
+            if '第' in before:
+                _logger.debug(f"✅ 检测到序数词: '第'")
+                return True
+            
+            # 检查前后是否有数字字符
+            for char in before[-3:]:  # 检查前3个字符
+                if char in digit_chars:
+                    _logger.debug(f"✅ 前方有数字字符: '{char}'")
+                    return True
+            
+            for char in after[:3]:  # 检查后3个字符
+                if char in digit_chars:
+                    _logger.debug(f"✅ 后方有数字字符: '{char}'")
+                    return True
+            
+            return False
+        
+        # 遍历文本，查找并替换口语数字
+        i = 0
+        while i < len(result):
+            # 检查当前位置是否匹配口语数字
+            matched = False
+            for spoken_word, standard_word in sorted(spoken_words.items(), key=lambda x: -len(x[0])):
+                # 检查是否匹配
+                if result[i:i+len(spoken_word)] == spoken_word:
+                    # 判断是否在数字上下文中
+                    if is_digit_context(result, i):
+                        _logger.debug(f"🔄 口语数字转换: '{spoken_word}' → '{standard_word}' (位置{i})")
+                        result = result[:i] + standard_word + result[i+len(spoken_word):]
+                        i += len(standard_word)
+                        matched = True
+                        break
+                    else:
+                        _logger.debug(f"⏭️ 跳过非数字上下文: '{spoken_word}' (位置{i})")
+            
+            if not matched:
+                i += 1
+        
+        return result
+    
+    def is_identifier_number(self, text: str, number_pos: int) -> bool:
+        """
+        判断数字是否为编号类（需要逐位朗读）
+        
+        参数:
+            text: 完整文本
+            number_pos: 数字在文本中的起始位置
+        
+        返回:
+            True: 编号类（逐位朗读）
+            False: 数值类（按数值朗读）
+        
+        逻辑:
+            向前搜索指定字符数，检查是否存在编号关键词
+        """
+        # 确定搜索范围
+        max_search = self.number_config.get('keyword_max_search_chars', 10)
+        search_start = max(0, number_pos - max_search)
+        prefix_text = text[search_start:number_pos]
+        
+        # 检查关键词
+        for keyword_item in self.identifier_keywords:
+            keyword = keyword_item.get('keyword', '')
+            max_distance = int(keyword_item.get('max_distance', 3))
+            
+            if keyword in prefix_text:
+                # 计算关键词到数字的距离
+                keyword_pos = prefix_text.rfind(keyword)
+                distance = len(prefix_text) - keyword_pos - len(keyword)
+                
+                if distance <= max_distance:
+                    _logger.debug(f"🔍 检测到编号关键词: '{keyword}', 距离={distance}")
+                    return True
+        
+        return False
+    
+    def number_to_chinese(self, num: int) -> str:
+        """
+        整数转中文（支持万、亿）
+        
+        示例:
+            10 → "十"
+            1007 → "一千零七"
+            7864 → "七千八百六十四"
+            12345 → "一万二千三百四十五"
+        """
+        if num == 0:
+            return "零"
+        
+        # 数字映射
+        digits = ["零", "一", "二", "三", "四", "五", "六", "七", "八", "九"]
+        units = ["", "十", "百", "千"]
+        big_units = ["", "万", "亿"]
+        
+        # 是否启用万、亿
+        enable_wan_yi = self.number_config.get('enable_wan_yi', True)
+        
+        if not enable_wan_yi:
+            # 不启用万、亿，直接逐位朗读
+            return " ".join([digits[int(d)] for d in str(num)])
+        
+        # 处理负数
+        negative = num < 0
+        num = abs(num)
+        
+        # 分段处理（亿、万、个）
+        def convert_section(n):
+            """转换0-9999的数字"""
+            if n == 0:
+                return ""
+            
+            result = ""
+            str_n = str(n)
+            length = len(str_n)
+            
+            for i, digit in enumerate(str_n):
+                digit_val = int(digit)
+                pos = length - i - 1  # 位置（0=个位，1=十位，2=百位，3=千位）
+                
+                if digit_val == 0:
+                    # 零的处理：避免连续零，末尾零不读
+                    if result and not result.endswith("零"):
+                        result += "零"
+                else:
+                    # 特殊处理：10-19 读作"十x"而不是"一十x"
+                    if pos == 1 and digit_val == 1 and length == 2:
+                        result += units[pos]
+                    else:
+                        result += digits[digit_val] + units[pos]
+            
+            # 去除末尾的零
+            return result.rstrip("零")
+        
+        # 分段
+        yi = num // 100000000
+        wan = (num % 100000000) // 10000
+        ge = num % 10000
+        
+        result = ""
+        
+        # 亿
+        if yi > 0:
+            result += convert_section(yi) + "亿"
+        
+        # 万
+        if wan > 0:
+            result += convert_section(wan) + "万"
+        elif yi > 0 and ge > 0:
+            # 亿和个之间需要补零
+            result += "零"
+        
+        # 个
+        if ge > 0:
+            result += convert_section(ge)
+        
+        # 处理负数
+        if negative:
+            result = "负" + result
+        
+        return result
+    
+    def process_decimal(self, decimal_str: str) -> str:
+        """
+        处理小数部分
+        
+        逻辑:
+            1. 四舍五入到指定位数
+            2. 逐位朗读
+        
+        示例:
+            "1234" → "一二"  (保留2位)
+            "5" → "五"
+            "50" → "五"  (去除末尾零)
+        """
+        decimal_places = self.number_config.get('decimal_places', 2)
+        
+        # 四舍五入
+        if len(decimal_str) > decimal_places:
+            # 转换为浮点数进行四舍五入
+            decimal_value = float("0." + decimal_str)
+            rounded_value = round(decimal_value, decimal_places)
+            decimal_str = str(rounded_value).split('.')[1] if '.' in str(rounded_value) else "0"
+        
+        # 去除末尾零
+        decimal_str = decimal_str.rstrip('0')
+        
+        if not decimal_str:
+            return ""
+        
+        # 逐位朗读（不加空格，更自然）
+        digits = ["零", "一", "二", "三", "四", "五", "六", "七", "八", "九"]
+        return "".join([digits[int(d)] for d in decimal_str])
+    
+    def process_number(self, text: str, match_obj, is_percentage: bool = False) -> str:
+        """
+        处理单个数字
+        
+        参数:
+            text: 完整文本
+            match_obj: 正则匹配对象
+            is_percentage: 是否为百分比
+        
+        返回:
+            处理后的数字字符串
+        """
+        number_str = match_obj.group(0)
+        number_pos = match_obj.start()
+        
+        # 去除百分号（如果有）
+        if is_percentage:
+            number_str = number_str.rstrip('%').rstrip()
+        
+        # 判断是否为编号类（只对纯整数判断）
+        if not is_percentage and '.' not in number_str and self.is_identifier_number(text, number_pos):
+            # 编号类：逐位朗读
+            digits = ["零", "一", "二", "三", "四", "五", "六", "七", "八", "九"]
+            result = " ".join([digits[int(d)] if d.isdigit() else d for d in number_str if d.isdigit()])
+            _logger.debug(f"📝 编号类: {number_str} → {result}")
+            return result
+        
+        # 数值类：整数部分按数值读，小数部分逐位读
+        if '.' in number_str:
+            integer_part, decimal_part = number_str.split('.')
+            
+            # 整数部分
+            if integer_part:
+                integer_chinese = self.number_to_chinese(int(integer_part))
+            else:
+                integer_chinese = "零"
+            
+            # 小数部分
+            decimal_chinese = self.process_decimal(decimal_part)
+            
+            if decimal_chinese:
+                result = f"{integer_chinese}点{decimal_chinese}"
+            else:
+                result = integer_chinese
+        else:
+            # 纯整数
+            result = self.number_to_chinese(int(number_str))
+        
+        # 百分比特殊处理
+        if is_percentage:
+            result = f"百分之{result}"
+        
+        _logger.debug(f"📝 数值类: {number_str} → {result}")
+        return result
+    
+    def process_percentages(self, text: str) -> str:
+        """
+        处理百分比
+        
+        支持:
+            - % 和 ％ 两种符号
+            - 空格：85.5 % 或 85.5%
+        
+        示例:
+            "85.5%" → "百分之八十五点五"
+            "100 %" → "百分之一百"
+        """
+        # 正则：匹配数字+可选空格+百分号
+        allow_space = self.number_config.get('percentage_allow_space', True)
+        
+        if allow_space:
+            pattern = r'\d+\.?\d*\s*%'
+        else:
+            pattern = r'\d+\.?\d*%'
+        
+        def replace_func(match):
+            return self.process_number(text, match, is_percentage=True)
+        
+        result = re.sub(pattern, replace_func, text)
+        return result
+    
+    def process_decimals(self, text: str) -> str:
+        """
+        处理所有剩余数字和小数
+        
+        逻辑:
+            1. 检查是否为编号类（前方有关键词）
+            2. 编号类：逐位朗读
+            3. 数值类：整数按数值读，小数逐位读
+        
+        示例:
+            "车辆编号1307" → "车辆编号 一 三 零 七"
+            "移动了7864米" → "移动了 七千八百六十四 米"
+            "距离12345米" → "距离 一万二千三百四十五 米"
+            "高度10.5米" → "高度 十点五 米"
+        """
+        # 正则：匹配所有数字（整数和小数）
+        pattern = r'\d+\.?\d*'
+        
+        def replace_func(match):
+            return self.process_number(text, match, is_percentage=False)
+        
+        result = re.sub(pattern, replace_func, text)
+        return result
+    
+    def process_text(self, text: str) -> str:
+        """
+        完整文本处理流程
+        
+        顺序:
+            1. 符号标准化（全角转半角）
+            2. 百分比处理
+            3. 数字和小数处理
+        
+        参数:
+            text: 原始文本
+        
+        返回:
+            处理后的文本
+        """
+        if not text:
+            return text
+        
+        _logger.debug(f"📥 原始文本: {text}")
+        
+        # 1. 符号标准化
+        text = self.normalize_symbols(text)
+        _logger.debug(f"🔄 符号标准化: {text}")
+        
+        # 2. 百分比处理
+        text = self.process_percentages(text)
+        _logger.debug(f"📊 百分比处理: {text}")
+        
+        # 3. 数字和小数处理
+        text = self.process_decimals(text)
+        _logger.debug(f"🔢 数字处理: {text}")
+        
+        _logger.debug(f"📤 最终文本: {text}")
+        
+        return text
+
+
+# 全局实例
+_text_processor = None
+
+
+def get_text_processor() -> TextProcessor:
+    """获取全局文本处理器实例"""
+    global _text_processor
+    if _text_processor is None:
+        _text_processor = TextProcessor()
+    return _text_processor
+

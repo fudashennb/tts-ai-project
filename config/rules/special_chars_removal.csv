@@ -1,0 +1,15 @@
+char_id,character,enabled,description
+1,*,TRUE,Markdown加粗符号
+2,_,TRUE,Markdown斜体符号
+3,#,TRUE,Markdown标题符号
+4,/,TRUE,斜杠
+5,`,TRUE,反引号
+6,~,TRUE,波浪号
+7,^,TRUE,插入符号
+8,[,TRUE,左方括号
+9,],TRUE,右方括号
+10,{,TRUE,左花括号
+11,},TRUE,右花括号
+12,|,TRUE,竖线
+13,\,TRUE,反斜杠
+

@@ -1,0 +1,6 @@
+config_key,config_value,value_type,description
+decimal_places,2,int,小数保留位数（四舍五入）
+enable_wan_yi,TRUE,bool,是否启用万、亿等大数单位
+percentage_allow_space,TRUE,bool,百分号前是否允许空格
+keyword_max_search_chars,10,int,向前搜索关键词的最大字符数
+

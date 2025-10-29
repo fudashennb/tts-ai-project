@@ -1,0 +1,10 @@
+word_id,wake_word,word_type,priority,enabled,description
+1,小德小德,exact,1,TRUE,主唤醒词
+2,小德,exact,2,TRUE,简化唤醒词
+3,德德,exact,2,TRUE,简化唤醒词
+4,小得,fuzzy,3,TRUE,容错匹配-同音字
+5,晓得晓得,fuzzy,3,TRUE,容错匹配-同音字
+6,小的小的,fuzzy,3,TRUE,容错匹配-同音字
+7,小滴小滴,fuzzy,4,TRUE,容错匹配-近音字
+8,小迪,fuzzy,4,TRUE,容错匹配-近音字
+

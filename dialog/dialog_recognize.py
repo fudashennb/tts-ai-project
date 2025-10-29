@@ -27,6 +27,10 @@ import log_config
 # 配置日志
 _logger = logging.getLogger(__name__)
 
+# 导入配置驱动的文本处理器
+from config.text_processor import get_text_processor
+from config.config_loader import get_config_loader
+
 # 自定义ALSA音频流类
 
 
@@ -865,6 +869,11 @@ class AudioStreamReader:
         self.speech_recognizer = SpeechRecognizer()
         self.tts_data = TTSData()
 
+        # 初始化配置驱动的文本处理器
+        self.text_processor = get_text_processor()
+        self.config_loader = get_config_loader()
+        _logger.info("✅ 文本处理器初始化完成")
+
         # 音频流相关属性
         self.vad_queue = deque(maxlen=vad_queue_size)  # VAD队列
         self.stream_active = False
@@ -1232,6 +1241,14 @@ class AudioStreamReader:
             #     _logger.warning(
             #         f"❌ 识别为播放语音，不进行播放,{self.future_play_end_time - audio_data.vad_start_time},{audio_data.vad_duration}")
             #     return   
+            
+            # ========== 口语数字标准化（新增）==========
+            # 将口语数字转换为标准数字，如"幺"→"一"、"洞"→"零"等
+            recognized_text_before = recognized_text
+            recognized_text = self.text_processor.normalize_spoken_digits(recognized_text)
+            if recognized_text != recognized_text_before:
+                _logger.info(f"🔄 口语数字标准化: '{recognized_text_before}' → '{recognized_text}'")
+            
             # 发送到AI服务器获取回复
             recognized_text = self._add_vehile_num(recognized_text)
             reply_qing_nin_shao_deng = self._synthesize_and_play_text("music/qing_nin_shao_deng.wav", use_path=True)
@@ -1250,13 +1267,19 @@ class AudioStreamReader:
         else:
             _logger.error(f"❌ 未在对话模式中，当前状态: {self.conversation_state}")
 
+    # ========== 以下方法已被配置驱动的文本处理器替换 ==========
+    # 新的处理逻辑在 config/text_processor.py 中
+    # 配置文件在 config/rules/ 目录下
+    # 保留这些方法以防需要回退
+    
     def _remove_chars(self, text, chars_to_remove=['*', '_', '#','/']):
+        """【已废弃】使用 config/rules/special_chars_removal.csv 替代"""
         for char in chars_to_remove:
             text = text.replace(char, '')
         return text
 
     def _process_abbreviations(self, text: str) -> str:
-        """处理英文缩写，在字母间插入空格以便TTS正确朗读"""
+        """【已废弃】使用 config/rules/abbreviations.csv 替代"""
         import re
         
         abbreviations = ['AGV', 'AMR', 'PLC', 'RFID', 'HMI', 'API', 'GPS', 'USB']
@@ -1269,6 +1292,7 @@ class AudioStreamReader:
         return re.sub(r'\s+', ' ', result).strip()
 
     def _process_percentages(self, text: str) -> str:
+        """【已废弃】使用 config/text_processor.py 中的统一处理逻辑替代"""
         """
         处理百分比格式，确保TTS正确朗读
         
@@ -1321,6 +1345,7 @@ class AudioStreamReader:
         return result
     
     def _process_decimals(self, text: str) -> str:
+        """【已废弃】使用 config/text_processor.py 中的统一处理逻辑替代"""
         """
         处理所有数字和小数，确保TTS正确朗读
         
@@ -1457,10 +1482,9 @@ class AudioStreamReader:
             # 验证响应格式并直接返回resultMsg
             if "resultCode" in response_data and "resultMsg" in response_data:
                 ai_reply = self._get_reply_text(response_data)
-                ai_reply = self._remove_chars(ai_reply)
-                ai_reply = self._process_abbreviations(ai_reply)  # 处理英文缩写
-                ai_reply = self._process_percentages(ai_reply)  # 处理百分比格式
-                ai_reply = self._process_decimals(ai_reply)  # 处理所有剩余数字和小数
+                
+                # 使用配置驱动的文本处理器（替换旧的硬编码方法）
+                ai_reply = self.text_processor.process_text(ai_reply)
                 
                 # 清理多余的空格（多个连续空格替换为单个空格）
                 import re
@@ -2189,8 +2213,12 @@ class AudioStreamReader:
             _logger.info("💡 请说话测试VAD功能")
 
             # 主循环：显示队列状态
+            last_csv_reload_time = time.time()  # 记录上次CSV重载时间
+            
             while True:
                 time.sleep(2)  # 每2秒显示一次状态
+                
+                # 从数据库读取配置参数
                 threshold = get_para_value("hmi.silence_duration_threshold")
                 if threshold is not None:
                     self.silence_duration_threshold = int(threshold)
@@ -2217,6 +2245,17 @@ class AudioStreamReader:
                 if speaker_volume is not None:
                     volume = float(speaker_volume)/100.0
                     self.tts_data.set_volume(volume)
+                
+                # CSV配置热加载（每60秒）
+                current_time = time.time()
+                if current_time - last_csv_reload_time > 60:
+                    try:
+                        _logger.info("🔄 开始重新加载CSV配置...")
+                        self.text_processor.reload_configs()
+                        last_csv_reload_time = current_time
+                        _logger.info("✅ CSV配置重新加载完成")
+                    except Exception as e:
+                        _logger.error(f"❌ 重新加载CSV配置失败: {e}")
 
                 status = self.get_queue_status()
                 # _logger.info(f"📊 队列状态: VAD队列={status['vad_queue_size']}, "

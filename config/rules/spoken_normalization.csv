@@ -1,0 +1,11 @@
+rule_id,spoken_word,standard_word,priority,enabled,description
+1,幺,一,1,TRUE,数字口语：幺→一（电话、编号）
+2,俩,二,2,TRUE,数字口语：俩→二
+3,两,二,2,TRUE,数字口语：两→二
+4,洞,零,1,TRUE,数字口语：洞→零（军事、电话）
+5,拐,七,1,TRUE,数字口语：拐→七（军事、电话）
+6,勾,九,1,TRUE,数字口语：勾→九（军事、电话）
+7,钩,九,1,TRUE,数字口语：钩→九（变体）
+8,guai,七,1,TRUE,数字口语：拼音容错
+9,gou,九,1,TRUE,数字口语：拼音容错
+
