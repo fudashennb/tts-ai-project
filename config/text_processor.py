@@ -46,8 +46,14 @@ class TextProcessor:
             # 编号关键词
             self.identifier_keywords = self.config_loader.get_enabled_items('number_identifier_keywords')
             
-            # 口语数字标准化规则（新增）
+            # 口语数字标准化规则
             self.spoken_digit_rules = self.config_loader.get_enabled_items('spoken_normalization')
+            
+            # 缩写词规则（新增）
+            self.abbreviation_rules = self.config_loader.get_enabled_items('abbreviations')
+            
+            # 特殊字符移除规则（新增）
+            self.special_chars_rules = self.config_loader.get_enabled_items('special_chars_removal')
             
             # 数字处理配置
             self.number_config = {
@@ -57,7 +63,7 @@ class TextProcessor:
                 'keyword_max_search_chars': self.config_loader.get_config_value('number_processing_config', 'keyword_max_search_chars', 10),
             }
             
-            _logger.info(f"✅ 文本处理器配置加载完成: {len(self.symbol_rules)}条符号规则, {len(self.identifier_keywords)}个关键词, {len(self.spoken_digit_rules)}条口语规则")
+            _logger.info(f"✅ 文本处理器配置加载完成: {len(self.symbol_rules)}条符号规则, {len(self.identifier_keywords)}个关键词, {len(self.spoken_digit_rules)}条口语规则, {len(self.abbreviation_rules)}个缩写词, {len(self.special_chars_rules)}个特殊字符")
         
         except Exception as e:
             _logger.error(f"❌ 加载配置失败: {e}")
@@ -80,6 +86,89 @@ class TextProcessor:
             replacement = rule.get('replacement', '')
             if original and replacement:
                 result = result.replace(original, replacement)
+        
+        return result
+    
+    def remove_special_chars(self, text: str) -> str:
+        """
+        移除特殊字符（基于配置）
+        
+        从 config/rules/special_chars_removal.csv 读取要移除的字符
+        
+        参数:
+            text: 原始文本
+        
+        返回:
+            移除特殊字符后的文本
+        """
+        if not text:
+            return text
+        
+        result = text
+        
+        # 遍历所有要移除的字符
+        for rule in self.special_chars_rules:
+            char = rule.get('character', '')
+            if char:
+                result = result.replace(char, '')
+                if char in text:
+                    _logger.debug(f"🗑️ 移除特殊字符: '{char}'")
+        
+        return result
+    
+    def process_abbreviations(self, text: str) -> str:
+        """
+        处理英文缩写（基于配置）
+        
+        从 config/rules/abbreviations.csv 读取缩写词规则
+        将缩写词转换为TTS友好格式（字母间加空格）
+        
+        示例：
+        - "AGV" → "A G V"
+        - "AMR系统" → "A M R 系统"
+        
+        参数:
+            text: 原始文本
+        
+        返回:
+            处理后的文本
+        """
+        if not text:
+            return text
+        
+        import re
+        
+        result = text
+        
+        # 构建缩写词列表
+        abbreviations = {}
+        for rule in self.abbreviation_rules:
+            abbr = rule.get('abbreviation', '')
+            tts_format = rule.get('tts_format', '')
+            if abbr and tts_format:
+                abbreviations[abbr] = tts_format
+        
+        if not abbreviations:
+            return result
+        
+        # 按长度排序（长的优先匹配，避免部分匹配）
+        sorted_abbrs = sorted(abbreviations.keys(), key=len, reverse=True)
+        
+        # 构建正则模式（词边界匹配，避免误匹配）
+        pattern = r'(?<![a-zA-Z])(' + '|'.join(re.escape(abbr) for abbr in sorted_abbrs) + r')(?![a-zA-Z])'
+        
+        def replace_func(match):
+            abbr = match.group(1).upper()
+            tts_format = abbreviations.get(abbr, abbreviations.get(match.group(1), ''))
+            if tts_format:
+                _logger.debug(f"🔤 缩写词转换: '{match.group(1)}' → '{tts_format}'")
+                return f' {tts_format} '
+            return match.group(0)
+        
+        result = re.sub(pattern, replace_func, text, flags=re.IGNORECASE)
+        
+        # 清理多余空格
+        result = re.sub(r'\s+', ' ', result).strip()
         
         return result
     
@@ -463,9 +552,11 @@ class TextProcessor:
         完整文本处理流程
         
         顺序:
-            1. 符号标准化（全角转半角）
-            2. 百分比处理
-            3. 数字和小数处理
+            1. 移除特殊字符
+            2. 处理缩写词
+            3. 符号标准化（全角转半角）
+            4. 百分比处理
+            5. 数字和小数处理
         
         参数:
             text: 原始文本
@@ -478,15 +569,23 @@ class TextProcessor:
         
         _logger.debug(f"📥 原始文本: {text}")
         
-        # 1. 符号标准化
+        # 1. 移除特殊字符（新增）
+        text = self.remove_special_chars(text)
+        _logger.debug(f"🗑️ 特殊字符移除: {text}")
+        
+        # 2. 处理缩写词（新增）
+        text = self.process_abbreviations(text)
+        _logger.debug(f"🔤 缩写词处理: {text}")
+        
+        # 3. 符号标准化
         text = self.normalize_symbols(text)
         _logger.debug(f"🔄 符号标准化: {text}")
         
-        # 2. 百分比处理
+        # 4. 百分比处理
         text = self.process_percentages(text)
         _logger.debug(f"📊 百分比处理: {text}")
         
-        # 3. 数字和小数处理
+        # 5. 数字和小数处理
         text = self.process_decimals(text)
         _logger.debug(f"🔢 数字处理: {text}")
         

@@ -797,7 +797,7 @@ class AudioStreamReader:
                  channels: int = 1,  # 修改为单通道，避免通道数问题
                  vad_queue_size: int = 5000,  # 减少队列大小，保持轻量
                  vad_min_chunks: int = 30,  # 调整为30个chunk，确保有足够数据检测静音
-                 max_speech_duration: float = 30.0,  # 最大语音时长（秒）
+                 max_speech_duration: float = 20.0,  # 最大语音时长（秒）
                  max_processing_time: float = 35.0):  # 最大处理时间（秒）
         """
         初始化音频流读取器
@@ -1248,7 +1248,6 @@ class AudioStreamReader:
             recognized_text = self.text_processor.normalize_spoken_digits(recognized_text)
             if recognized_text != recognized_text_before:
                 _logger.info(f"🔄 口语数字标准化: '{recognized_text_before}' → '{recognized_text}'")
-            
             # 发送到AI服务器获取回复
             recognized_text = self._add_vehile_num(recognized_text)
             reply_qing_nin_shao_deng = self._synthesize_and_play_text("music/qing_nin_shao_deng.wav", use_path=True)
@@ -1662,6 +1661,8 @@ class AudioStreamReader:
             if self.conversation_state == ConversationState.WAIT_FOR_WAKEUP:
                 min_speech_energy = self.min_speech_energy*0.8
 
+            if self.conversation_state == ConversationState.WAIT_FOR_WAKEUP:
+                self.silence_duration_ms = 300
             # 初始化VAD检测器 - 使用更敏感的参数
             vad = VoiceActivityDetector(
                 sample_rate=self.sample_rate,  # 使用48000Hz
@@ -1679,6 +1680,7 @@ class AudioStreamReader:
             speech_start_frame = -1
             speech_end_frame = -1
             speech_detected = False
+            beyond_max_speech_duration = False
 
             # 实时检测：从音频开始位置向前扫描
             # 这样可以按时间顺序检测语音活动
@@ -1738,6 +1740,7 @@ class AudioStreamReader:
                         _logger.warning(
                             f"⏰ 从语音开始算起{self.max_speech_duration}秒超时，强制结束语音检测，帧位置: {speech_end_frame}")
                         _logger.info(f"   实际语音时长: {elapsed_time:.2f}秒")
+                        beyond_max_speech_duration = True
                         break
 
                 # 使用detect_speech_end检测语音结束
@@ -1758,7 +1761,14 @@ class AudioStreamReader:
             #     _logger.info(f"⚠️ 未检测到明确的语音结束，使用音频末尾作为结束点")
             #     _logger.info(f"   音频末尾帧位置: {speech_end_frame}")
             #     _logger.info(f"   实际语音时长: {actual_duration:.2f}秒")
-            
+            if beyond_max_speech_duration:
+                speech_end_frame = len(mono_audio)
+                actual_duration = time.time() - speech_start_time if speech_start_time else 0
+                _logger.info(f"⚠️ 未检测到明确的语音结束，使用音频末尾作为结束点")
+                _logger.info(f"   音频末尾帧位置: {speech_end_frame}")
+                _logger.info(f"   实际语音时长: {actual_duration:.2f}秒")
+                self._cleanup_processed_chunks(speech_end_frame)
+                return AudioStreamReader.AudioData(mono_audio, "speech", len(mono_audio) / self.sample_rate, speech_start_time, time.time())
             # 提取语音片段
             if speech_start_frame >= 0 and speech_end_frame > speech_start_frame:
                 speech_audio = mono_audio[speech_start_frame:speech_end_frame]
@@ -1884,33 +1894,33 @@ class AudioStreamReader:
 
     def _is_wake_word(self, recognized_text: str) -> bool:
         """
-        检查识别文本是否包含唤醒词
+        检查识别文本是否包含唤醒词（配置驱动）
+        
+        从 config/rules/wake_words.csv 读取唤醒词配置
+        支持精确匹配和模糊匹配
         """
-        # 精确匹配的唤醒词
-        wake_words = ["小德小德", "小德", "德德"]
-        # 容错匹配，处理ASR识别错误
-        fuzzy_wake_words = ["小得", "小德德", "德小德",
-                            "晓得晓得", "晓德", "小的小的", "晓的晓得", "晓得晓的"]
-
+        # 从配置加载器获取唤醒词
+        wake_words_data = self.config_loader.get_enabled_items('wake_words')
+        
+        # 分类唤醒词
+        exact_words = [w['wake_word'] for w in wake_words_data if w['word_type'] == 'exact']
+        fuzzy_words = [w['wake_word'] for w in wake_words_data if w['word_type'] == 'fuzzy']
+        
         # 检查精确匹配
-        is_wake_word = any(word in recognized_text for word in wake_words)
-        _logger.info(f"🔍 精确匹配检查: {is_wake_word}")
-
-        # 如果精确匹配失败，尝试模糊匹配
-        if not is_wake_word:
-            is_wake_word = any(
-                word in recognized_text for word in fuzzy_wake_words)
-            if is_wake_word:
-                _logger.info(f"🔍 通过模糊匹配检测到唤醒词")
-
-        # 特殊处理：如果包含"德"字，放宽条件
-        if not is_wake_word and "小德" in recognized_text:
-            if len(recognized_text) <= 15 or any(char in recognized_text for char in ["小", "得"]):
-                is_wake_word = True
-                _logger.info(f"🔍 通过德字匹配检测到唤醒词 (文本长度: {len(recognized_text)})")
-
-        _logger.info(f"🎯 最终唤醒词检测结果: {is_wake_word}")
-        return is_wake_word
+        is_wake_word = any(word in recognized_text for word in exact_words)
+        if is_wake_word:
+            matched_word = next(word for word in exact_words if word in recognized_text)
+            _logger.info(f"🔍 精确匹配检测到唤醒词: '{matched_word}'")
+            return True
+        
+        # 检查模糊匹配
+        for word in fuzzy_words:
+            if word in recognized_text:
+                _logger.info(f"🔍 模糊匹配检测到唤醒词: '{word}'")
+                return True
+        
+        _logger.info(f"🎯 未检测到唤醒词")
+        return False
 
     def _get_response_duration(self, response) -> float:
         """

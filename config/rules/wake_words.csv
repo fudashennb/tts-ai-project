@@ -1,10 +1,225 @@
 word_id,wake_word,word_type,priority,enabled,description
-1,小德小德,exact,1,TRUE,主唤醒词
-2,小德,exact,2,TRUE,简化唤醒词
-3,德德,exact,2,TRUE,简化唤醒词
+1,小德小德,exact,1,TRUE,主唤醒词-小德
+2,小德,exact,2,TRUE,简化唤醒词-小德
+3,德德,exact,2,TRUE,简化唤醒词-德德
 4,小得,fuzzy,3,TRUE,容错匹配-同音字
 5,晓得晓得,fuzzy,3,TRUE,容错匹配-同音字
 6,小的小的,fuzzy,3,TRUE,容错匹配-同音字
 7,小滴小滴,fuzzy,4,TRUE,容错匹配-近音字
 8,小迪,fuzzy,4,TRUE,容错匹配-近音字
+9,嗨AGV,exact,1,TRUE,主唤醒词-中文+大写
+10,嗨agv,exact,1,TRUE,主唤醒词-中文+小写
+11,嗨，AGV,exact,1,TRUE,主唤醒词-带逗号
+12,嗨 AGV,exact,1,TRUE,主唤醒词-带空格+大写
+13,嗨 agv,exact,1,TRUE,主唤醒词-带空格+小写
+14,嗨A G V,exact,1,TRUE,主唤醒词-AGV分开大写
+15,嗨a g v,exact,1,TRUE,主唤醒词-agv分开小写
+16,hi AGV,exact,1,TRUE,主唤醒词-英文+大写
+17,hi agv,exact,1,TRUE,主唤醒词-英文+小写
+18,hi a g v,exact,1,TRUE,主唤醒词-英文agv分开
+19,hi A G V,exact,1,TRUE,主唤醒词-英文AGV分开
+20,HI AGV,exact,1,TRUE,主唤醒词-全大写
+21,HI agv,exact,1,TRUE,主唤醒词-HI大写agv小写
+22,hai AGV,exact,1,TRUE,主唤醒词-拼音全拼+大写
+23,hai agv,exact,1,TRUE,主唤醒词-拼音全拼+小写
+24,hai a g v,exact,1,TRUE,主唤醒词-拼音全拼agv分开
+25,<|en|>hi agv,exact,1,TRUE,主唤醒词-带语言标签
+26,<|en|>hi a g v,exact,1,TRUE,主唤醒词-带语言标签agv分开
+27,<|en|>hi a v,exact,1,TRUE,主唤醒词-带语言标签缺g
+28,hi a v,exact,1,TRUE,主唤醒词-缺g
+29,嗨a v,exact,1,TRUE,主唤醒词-中文缺g
+30,开AGV,fuzzy,3,TRUE,容错-"嗨"识别为"开"+大写
+31,开agv,fuzzy,3,TRUE,容错-"嗨"识别为"开"+小写
+32,开 AGV,fuzzy,3,TRUE,容错-"嗨"识别为"开"（带空格）+大写
+33,开 agv,fuzzy,3,TRUE,容错-"嗨"识别为"开"（带空格）+小写
+34,开 a g v,fuzzy,3,TRUE,容错-"嗨"识别为"开"（分开）
+35,开A G V,fuzzy,3,TRUE,容错-"嗨"识别为"开"（分开大写）
+36,kai agv,fuzzy,3,TRUE,容错-"嗨"拼音识别为"kai"
+37,kai a g v,fuzzy,3,TRUE,容错-"嗨"拼音识别为"kai"（分开）
+38,海AGV,fuzzy,3,TRUE,容错-音近字"海"+大写
+39,海agv,fuzzy,3,TRUE,容错-音近字"海"+小写
+40,海 agv,fuzzy,3,TRUE,容错-音近字"海"（带空格）
+41,海a g v,fuzzy,3,TRUE,容错-音近字"海"（分开）
+42,hai AGV,fuzzy,3,TRUE,容错-拼音"海"+大写
+43,hai a g v,fuzzy,3,TRUE,容错-拼音"海"（分开）
+44,孩AGV,fuzzy,3,TRUE,容错-音近字"孩"+大写
+45,孩agv,fuzzy,3,TRUE,容错-音近字"孩"+小写
+46,孩 agv,fuzzy,3,TRUE,容错-音近字"孩"（带空格）
+47,害AGV,fuzzy,3,TRUE,容错-音近字"害"+大写
+48,害agv,fuzzy,3,TRUE,容错-音近字"害"+小写
+49,咳AGV,fuzzy,4,TRUE,容错-音近字"咳"
+50,咳agv,fuzzy,4,TRUE,容错-音近字"咳"+小写
+51,嗨A机V,fuzzy,3,TRUE,容错-AGV识别为"A机V"
+52,嗨A几V,fuzzy,3,TRUE,容错-AGV识别为"A几V"
+53,嗨a机v,fuzzy,3,TRUE,容错-agv识别为"a机v"
+54,嗨a几v,fuzzy,3,TRUE,容错-agv识别为"a几v"
+55,嗨诶机V,fuzzy,3,TRUE,容错-AGV识别为"诶机V"
+56,嗨诶几V,fuzzy,3,TRUE,容错-AGV识别为"诶几V"
+57,嗨诶鸡威,fuzzy,4,TRUE,容错-AGV完全音译
+58,海A G V,fuzzy,3,TRUE,容错-海+AGV分开大写
+59,海a g v,fuzzy,3,TRUE,容错-海+agv分开小写
+60,嗨机器人,fuzzy,4,TRUE,容错-AGV说成机器人
+61,嗨小车,fuzzy,4,TRUE,容错-AGV说成小车
+62,hi 机器人,fuzzy,4,TRUE,容错-英文hi+中文机器人
+63,hey agv,fuzzy,3,TRUE,容错-hey变体
+64,hey a g v,fuzzy,3,TRUE,容错-hey变体（分开）
+65,a g v,fuzzy,4,TRUE,容错-只说AGV
+66,agv,fuzzy,4,TRUE,容错-只说agv（小写）
+67,AGV,fuzzy,4,TRUE,容错-只说AGV（大写）
+68,<|en|>hi g v,exact,1,TRUE,主唤醒词-缺少a
+69,hi g v,exact,1,TRUE,主唤醒词-缺少a（无标签）
+70,嗨g v,exact,1,TRUE,主唤醒词-中文缺少a
+71,<|en|>hi h v,exact,1,TRUE,主唤醒词-a识别为h
+72,hi h v,exact,1,TRUE,主唤醒词-a识别为h（无标签）
+73,嗨h v,exact,1,TRUE,主唤醒词-中文a识别为h
+74,<|en|>hi h t v,exact,1,TRUE,主唤醒词-ag识别为ht
+75,hi h t v,exact,1,TRUE,主唤醒词-ag识别为ht（无标签）
+76,嗨h t v,exact,1,TRUE,主唤醒词-中文ag识别为ht
+77,<|en|>hi e g v,exact,1,TRUE,主唤醒词-a识别为e
+78,hi e g v,exact,1,TRUE,主唤醒词-a识别为e（无标签）
+79,嗨e g v,exact,1,TRUE,主唤醒词-中文a识别为e
+80,<|en|>hi a b v,exact,1,TRUE,主唤醒词-g识别为b
+81,hi a b v,exact,1,TRUE,主唤醒词-g识别为b（无标签）
+82,嗨a b v,exact,1,TRUE,主唤醒词-中文g识别为b
+83,<|en|>hi a d v,exact,1,TRUE,主唤醒词-g识别为d
+84,hi a d v,exact,1,TRUE,主唤醒词-g识别为d（无标签）
+85,嗨a d v,exact,1,TRUE,主唤醒词-中文g识别为d
+86,<|en|>hi a g b,exact,1,TRUE,主唤醒词-v识别为b
+87,hi a g b,exact,1,TRUE,主唤醒词-v识别为b（无标签）
+88,嗨a g b,exact,1,TRUE,主唤醒词-中文v识别为b
+89,<|en|>hi a g w,exact,1,TRUE,主唤醒词-v识别为w
+90,hi a g w,exact,1,TRUE,主唤醒词-v识别为w（无标签）
+91,嗨a g w,exact,1,TRUE,主唤醒词-中文v识别为w
+92,嗨鸡v,exact,1,TRUE,主唤醒词-ag识别为"鸡"
+93,嗨鸡 v,exact,1,TRUE,主唤醒词-ag识别为"鸡"（带空格）
+94,嗨机v,exact,1,TRUE,主唤醒词-ag识别为"机"
+95,嗨机 v,exact,1,TRUE,主唤醒词-ag识别为"机"（带空格）
+96,嗨几v,exact,1,TRUE,主唤醒词-ag识别为"几"
+97,嗨几 v,exact,1,TRUE,主唤醒词-ag识别为"几"（带空格）
+98,嗨纪v,exact,1,TRUE,主唤醒词-ag识别为"纪"
+99,嗨纪 v,exact,1,TRUE,主唤醒词-ag识别为"纪"（带空格）
+100,hi ji v,exact,1,TRUE,主唤醒词-ag拼音识别为"ji"
+101,hai ji v,exact,1,TRUE,主唤醒词-拼音"hai ji"
+102,<|en|>a g v,exact,1,TRUE,主唤醒词-缺少hi
+103,<|en|>a v,exact,1,TRUE,主唤醒词-缺少hi和g
+104,<|en|>g v,exact,1,TRUE,主唤醒词-缺少hi和a
+105,<|en|>v,exact,1,TRUE,主唤醒词-只有v
+106,嗨v,fuzzy,3,TRUE,容错-只有v（中文）
+107,hi v,fuzzy,3,TRUE,容错-只有v（英文）
+108,hai v,fuzzy,3,TRUE,容错-只有v（拼音）
+109,嗨威,fuzzy,3,TRUE,容错-agv识别为"威"
+110,嗨薇,fuzzy,3,TRUE,容错-agv识别为"薇"
+111,嗨维,fuzzy,3,TRUE,容错-agv识别为"维"
+112,hi wei,fuzzy,3,TRUE,容错-agv拼音识别为"wei"
+113,嗨ei ji wei,fuzzy,3,TRUE,容错-完全拼音音译
+114,<|zh|>嗨agv,exact,1,TRUE,主唤醒词-中文标签
+115,<|zh|>嗨a g v,exact,1,TRUE,主唤醒词-中文标签分开
+116,<|zh|>嗨a v,exact,1,TRUE,主唤醒词-中文标签缺g
+117,你好agv,fuzzy,3,TRUE,容错-"嗨"识别为"你好"
+118,你好a g v,fuzzy,3,TRUE,容错-"嗨"识别为"你好"（分开）
+119,哎agv,fuzzy,3,TRUE,容错-"嗨"识别为"哎"
+120,哎a g v,fuzzy,3,TRUE,容错-"嗨"识别为"哎"（分开）
+121,喂agv,fuzzy,3,TRUE,容错-"嗨"识别为"喂"
+122,喂a g v,fuzzy,3,TRUE,容错-"嗨"识别为"喂"（分开）
+123,hello agv,fuzzy,3,TRUE,容错-"hi"识别为"hello"
+124,hello a g v,fuzzy,3,TRUE,容错-"hi"识别为"hello"（分开）
+125,<|yue|>hi agv,exact,1,TRUE,主唤醒词-粤语标签
+126,<|yue|>hi a g v,exact,1,TRUE,主唤醒词-粤语标签（分开）
+127,<|yue|>hi a v,exact,1,TRUE,主唤醒词-粤语标签（缺g）
+128,<|yue|>hi g v,exact,1,TRUE,主唤醒词-粤语标签（缺a）
+129,<|yue|>hi a t v,exact,1,TRUE,主唤醒词-粤语标签（g→t）
+130,<|yue|>hi h t v,exact,1,TRUE,主唤醒词-粤语标签（ag→ht）
+131,<|yue|>hi t v,exact,1,TRUE,主唤醒词-粤语标签（缺ag）
+132,<|yue|>a g v,exact,1,TRUE,主唤醒词-粤语标签（缺hi）
+133,<|yue|>a v,exact,1,TRUE,主唤醒词-粤语标签（缺hi和g）
+134,<|ja|>hi agv,exact,1,TRUE,主唤醒词-日语标签
+135,<|ja|>hi a g v,exact,1,TRUE,主唤醒词-日语标签（分开）
+136,<|ko|>hi agv,exact,1,TRUE,主唤醒词-韩语标签
+137,<|ko|>hi a g v,exact,1,TRUE,主唤醒词-韩语标签（分开）
+138,<|de|>hi agv,exact,1,TRUE,主唤醒词-德语标签
+139,<|fr|>hi agv,exact,1,TRUE,主唤醒词-法语标签
+140,<|es|>hi agv,exact,1,TRUE,主唤醒词-西班牙语标签
+141,hi a t v,exact,1,TRUE,主唤醒词-g识别为t
+142,嗨a t v,exact,1,TRUE,主唤醒词-中文g识别为t
+143,<|en|>hi a t v,exact,1,TRUE,主唤醒词-英文标签g识别为t
+144,hi t v,exact,1,TRUE,主唤醒词-缺ag只有tv
+145,嗨t v,exact,1,TRUE,主唤醒词-中文缺ag
+146,<|en|>hi t v,exact,1,TRUE,主唤醒词-英文标签缺ag
+147,hi a c v,exact,1,TRUE,主唤醒词-g识别为c
+148,嗨a c v,exact,1,TRUE,主唤醒词-中文g识别为c
+149,hi a j v,exact,1,TRUE,主唤醒词-g识别为j
+150,嗨a j v,exact,1,TRUE,主唤醒词-中文g识别为j
+151,hi a k v,exact,1,TRUE,主唤醒词-g识别为k
+152,嗨a k v,exact,1,TRUE,主唤醒词-中文g识别为k
+153,hi a p v,exact,1,TRUE,主唤醒词-g识别为p
+154,嗨a p v,exact,1,TRUE,主唤醒词-中文g识别为p
+155,hi a f v,exact,1,TRUE,主唤醒词-g识别为f
+156,嗨a f v,exact,1,TRUE,主唤醒词-中文g识别为f
+157,hi a s v,exact,1,TRUE,主唤醒词-g识别为s
+158,嗨a s v,exact,1,TRUE,主唤醒词-中文g识别为s
+159,hi a z v,exact,1,TRUE,主唤醒词-g识别为z
+160,嗨a z v,exact,1,TRUE,主唤醒词-中文g识别为z
+161,hi a i v,exact,1,TRUE,主唤醒词-g识别为i
+162,嗨a i v,exact,1,TRUE,主唤醒词-中文g识别为i
+163,hi a o v,exact,1,TRUE,主唤醒词-g识别为o
+164,嗨a o v,exact,1,TRUE,主唤醒词-中文g识别为o
+165,hi a u v,exact,1,TRUE,主唤醒词-g识别为u
+166,嗨a u v,exact,1,TRUE,主唤醒词-中文g识别为u
+125,hi hv,exact,1,TRUE,主唤醒词-缺少a和g（无空格）
+126,<|en|>hi hv,exact,1,TRUE,主唤醒词-缺少a和g（带标签）
+127,嗨hv,exact,1,TRUE,主唤醒词-中文缺少a和g
+128,hi av,exact,1,TRUE,主唤醒词-缺少g（无空格）
+129,<|en|>hi av,exact,1,TRUE,主唤醒词-缺少g（带标签无空格）
+130,嗨av,exact,1,TRUE,主唤醒词-中文缺少g（无空格）
+131,hi gv,exact,1,TRUE,主唤醒词-缺少a（无空格）
+132,<|en|>hi gv,exact,1,TRUE,主唤醒词-缺少a（带标签无空格）
+133,嗨gv,exact,1,TRUE,主唤醒词-中文缺少a（无空格）
+134,hiagv,exact,1,TRUE,主唤醒词-完全连写
+135,<|en|>hiagv,exact,1,TRUE,主唤醒词-完全连写（带标签）
+136,嗨ag杯,exact,1,TRUE,主唤醒词-v识别为"杯"
+137,<|en|>hi a g杯,exact,1,TRUE,主唤醒词-v识别为"杯"（带标签）
+138,hi a g杯,exact,1,TRUE,主唤醒词-v识别为"杯"（无标签）
+139,嗨ag贝,exact,1,TRUE,主唤醒词-v识别为"贝"
+140,hi a g贝,exact,1,TRUE,主唤醒词-v识别为"贝"
+141,<|en|>hi a g贝,exact,1,TRUE,主唤醒词-v识别为"贝"（带标签）
+142,嗨ag比,exact,1,TRUE,主唤醒词-v识别为"比"
+143,hi a g比,exact,1,TRUE,主唤醒词-v识别为"比"
+144,嗨ag逼,exact,1,TRUE,主唤醒词-v识别为"逼"
+145,hi a g逼,exact,1,TRUE,主唤醒词-v识别为"逼"
+146,嗨ag碑,exact,1,TRUE,主唤醒词-v识别为"碑"
+147,hi a g碑,exact,1,TRUE,主唤醒词-v识别为"碑"
+148,嗨杯,fuzzy,3,TRUE,容错-agv识别为"杯"
+149,hi杯,fuzzy,3,TRUE,容错-agv识别为"杯"
+150,嗨贝,fuzzy,3,TRUE,容错-agv识别为"贝"
+151,hi贝,fuzzy,3,TRUE,容错-agv识别为"贝"
+152,嗨比,fuzzy,3,TRUE,容错-agv识别为"比"
+153,hi比,fuzzy,3,TRUE,容错-agv识别为"比"
+154,嗨a杯,fuzzy,3,TRUE,容错-gv识别为"杯"
+155,hi a杯,fuzzy,3,TRUE,容错-gv识别为"杯"
+156,嗨a贝,fuzzy,3,TRUE,容错-gv识别为"贝"
+157,hi a贝,fuzzy,3,TRUE,容错-gv识别为"贝"
+158,haiagv,exact,1,TRUE,主唤醒词-拼音连写
+159,kaiagv,fuzzy,3,TRUE,容错-开agv连写
+160,agb,fuzzy,4,TRUE,容错-v识别为b
+161,adv,fuzzy,4,TRUE,容错-g识别为d
+162,abv,fuzzy,4,TRUE,容错-g识别为b
+163,agw,fuzzy,4,TRUE,容错-v识别为w
+164,hiv,fuzzy,3,TRUE,容错-缺少ag
+165,<|en|>hiv,fuzzy,3,TRUE,容错-缺少ag（带标签）
+166,haiv,fuzzy,3,TRUE,容错-拼音缺少ag
+167,嗨i v,fuzzy,3,TRUE,容错-缺少ag（带空格）
+168,hi a j v,exact,1,TRUE,主唤醒词-g识别为j
+169,<|en|>hi a j v,exact,1,TRUE,主唤醒词-g识别为j（带标签）
+170,嗨a j v,exact,1,TRUE,主唤醒词-中文g识别为j
+171,hi ajv,exact,1,TRUE,主唤醒词-g识别为j（无空格）
+172,嗨ajv,exact,1,TRUE,主唤醒词-中文g识别为j（无空格）
+173,hi a c v,exact,1,TRUE,主唤醒词-g识别为c
+174,hi acv,exact,1,TRUE,主唤醒词-g识别为c（无空格）
+175,嗨acv,exact,1,TRUE,主唤醒词-中文g识别为c（无空格）
+176,hi a g u,exact,1,TRUE,主唤醒词-v识别为u
+177,hi agu,exact,1,TRUE,主唤醒词-v识别为u（无空格）
+178,嗨agu,exact,1,TRUE,主唤醒词-中文v识别为u（无空格）
+179,hi a y v,exact,1,TRUE,主唤醒词-g识别为y
+180,hi ayv,exact,1,TRUE,主唤醒词-g识别为y（无空格）
+181,嗨ayv,exact,1,TRUE,主唤醒词-中文g识别为y（无空格）
 

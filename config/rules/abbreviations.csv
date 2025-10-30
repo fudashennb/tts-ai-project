@@ -14,4 +14,9 @@ abbr_id,abbreviation,tts_format,enabled,description
 13,ID,I D,TRUE,标识符
 14,VIP,V I P,TRUE,重要人物
 15,CEO,C E O,TRUE,首席执行官
+16,HTTP,H T T P,TRUE,超文本传输协议
+17,HTTPS,H T T P S,TRUE,安全超文本传输协议
+18,FTP,F T P,TRUE,文件传输协议
+19,TCP,T C P,TRUE,传输控制协议
+20,IP,I P,TRUE,网络协议
 

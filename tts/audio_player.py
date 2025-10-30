@@ -270,70 +270,266 @@ class AudioPlayer:
             subprocess.run(["amixer", "set", "'DAC VOLUME'",
                            f"{volume_percent}%"], check=False)
 
-    def _normalize_audio_with_sox(self, input_file: str, target_rms: float = -20.0) -> str:
+    def _read_wav_file_pure_numpy(self, file_path: str):
         """
-        使用 sox 工具标准化音频文件音量
+        使用纯 numpy 读取 WAV 文件
+        
+        Args:
+            file_path: WAV 文件路径
+            
+        Returns:
+            tuple: (sample_rate, audio_data)
+                - sample_rate: 采样率 (int)
+                - audio_data: 音频数据 (numpy.ndarray)
+                
+        Raises:
+            RuntimeError: 文件读取失败或格式不支持
+        """
+        try:
+            with open(file_path, 'rb') as f:
+                # 读取 WAV 文件头（44字节标准头）
+                riff = f.read(4)  # "RIFF"
+                if riff != b'RIFF':
+                    raise RuntimeError(f"不是有效的 WAV 文件: {file_path}")
+                
+                file_size = int.from_bytes(f.read(4), 'little')
+                wave_tag = f.read(4)  # "WAVE"
+                
+                if wave_tag != b'WAVE':
+                    raise RuntimeError(f"不是有效的 WAVE 格式: {file_path}")
+                
+                # 读取 fmt 子块
+                fmt_tag = f.read(4)  # "fmt "
+                fmt_size = int.from_bytes(f.read(4), 'little')
+                audio_format = int.from_bytes(f.read(2), 'little')  # 1 = PCM
+                num_channels = int.from_bytes(f.read(2), 'little')
+                sample_rate = int.from_bytes(f.read(4), 'little')
+                byte_rate = int.from_bytes(f.read(4), 'little')
+                block_align = int.from_bytes(f.read(2), 'little')
+                bits_per_sample = int.from_bytes(f.read(2), 'little')
+                
+                # 跳过可能的额外 fmt 数据
+                if fmt_size > 16:
+                    f.read(fmt_size - 16)
+                
+                # 查找 data 子块
+                while True:
+                    chunk_id = f.read(4)
+                    if not chunk_id:
+                        raise RuntimeError("未找到 data 块")
+                    chunk_size = int.from_bytes(f.read(4), 'little')
+                    
+                    if chunk_id == b'data':
+                        # 找到数据块
+                        break
+                    else:
+                        # 跳过其他块
+                        f.read(chunk_size)
+                
+                # 读取音频数据
+                audio_bytes = f.read(chunk_size)
+                
+                # 根据位深度转换为 numpy 数组
+                if bits_per_sample == 16:
+                    audio_data = np.frombuffer(audio_bytes, dtype=np.int16)
+                    max_val = 32768.0  # 2^15
+                elif bits_per_sample == 24:
+                    # 24位需要特殊处理
+                    audio_data = np.frombuffer(audio_bytes, dtype=np.uint8)
+                    audio_data = audio_data.reshape(-1, 3)
+                    # 转换为 int32
+                    audio_data = np.pad(audio_data, ((0, 0), (0, 1)), mode='constant')
+                    audio_data = audio_data.view(np.int32).flatten()
+                    audio_data = audio_data >> 8  # 右移8位
+                    max_val = 8388608.0  # 2^23
+                elif bits_per_sample == 32:
+                    audio_data = np.frombuffer(audio_bytes, dtype=np.int32)
+                    max_val = 2147483648.0  # 2^31
+                else:
+                    raise RuntimeError(f"不支持的位深度: {bits_per_sample}")
+                
+                # 转换为 float32，归一化到 [-1.0, 1.0]
+                audio_float = audio_data.astype(np.float32) / max_val
+                
+                # 处理多声道（转为 (samples, channels) 形状）
+                if num_channels > 1:
+                    audio_float = audio_float.reshape(-1, num_channels)
+                
+                logger.info(f"📖 读取 WAV 文件: {file_path}")
+                logger.info(f"   采样率: {sample_rate} Hz")
+                logger.info(f"   声道数: {num_channels}")
+                logger.info(f"   位深度: {bits_per_sample} bit")
+                logger.info(f"   样本数: {len(audio_float)}")
+                
+                return sample_rate, audio_float, num_channels, bits_per_sample
+                
+        except Exception as e:
+            raise RuntimeError(f"读取 WAV 文件失败: {e}")
+    
+    def _write_wav_file_pure_numpy(self, file_path: str, sample_rate: int, audio_data: np.ndarray, bits_per_sample: int = 16):
+        """
+        使用纯 numpy 写入 WAV 文件
+        
+        Args:
+            file_path: 输出文件路径
+            sample_rate: 采样率
+            audio_data: 音频数据 (float32, 范围 [-1.0, 1.0])
+            bits_per_sample: 位深度 (16 或 32)
+        """
+        try:
+            # 确定声道数
+            if len(audio_data.shape) == 1:
+                num_channels = 1
+                samples = len(audio_data)
+            else:
+                num_channels = audio_data.shape[1]
+                samples = audio_data.shape[0]
+            
+            # 转换为整数格式
+            if bits_per_sample == 16:
+                max_val = 32767.0
+                audio_int = np.clip(audio_data * max_val, -32768, 32767).astype(np.int16)
+                bytes_per_sample = 2
+            elif bits_per_sample == 32:
+                max_val = 2147483647.0
+                audio_int = np.clip(audio_data * max_val, -2147483648, 2147483647).astype(np.int32)
+                bytes_per_sample = 4
+            else:
+                raise RuntimeError(f"不支持的位深度: {bits_per_sample}")
+            
+            # 展平多声道数据
+            if len(audio_int.shape) > 1:
+                audio_int = audio_int.flatten()
+            
+            # 计算文件大小
+            byte_rate = sample_rate * num_channels * bytes_per_sample
+            block_align = num_channels * bytes_per_sample
+            data_size = len(audio_int.tobytes())
+            file_size = 36 + data_size
+            
+            with open(file_path, 'wb') as f:
+                # RIFF 头
+                f.write(b'RIFF')
+                f.write(file_size.to_bytes(4, 'little'))
+                f.write(b'WAVE')
+                
+                # fmt 子块
+                f.write(b'fmt ')
+                f.write((16).to_bytes(4, 'little'))  # fmt 块大小
+                f.write((1).to_bytes(2, 'little'))   # 音频格式 (PCM)
+                f.write(num_channels.to_bytes(2, 'little'))
+                f.write(sample_rate.to_bytes(4, 'little'))
+                f.write(byte_rate.to_bytes(4, 'little'))
+                f.write(block_align.to_bytes(2, 'little'))
+                f.write(bits_per_sample.to_bytes(2, 'little'))
+                
+                # data 子块
+                f.write(b'data')
+                f.write(data_size.to_bytes(4, 'little'))
+                f.write(audio_int.tobytes())
+            
+            logger.info(f"💾 写入 WAV 文件: {file_path}")
+            logger.info(f"   文件大小: {os.path.getsize(file_path)} bytes")
+            
+        except Exception as e:
+            raise RuntimeError(f"写入 WAV 文件失败: {e}")
+    
+    def _normalize_audio_with_numpy(self, input_file: str, target_rms_db: float = -20.0, peak_db: float = -3.0) -> str:
+        """
+        使用纯 numpy 标准化音频文件音量（替代 sox）
+        
+        算法说明:
+        1. RMS 标准化: 调整音频的均方根音量到目标值
+        2. 峰值限制: 防止削波失真
         
         Args:
             input_file: 输入音频文件路径
-            target_rms: 目标RMS音量（dB），默认-20dB
+            target_rms_db: 目标 RMS 音量（dB），默认 -20dB
+            peak_db: 峰值限制（dB），默认 -3dB
             
         Returns:
             str: 标准化后的临时文件路径
             
         Raises:
-            RuntimeError: sox 处理失败时抛出
+            RuntimeError: 处理失败时抛出
         """
         import tempfile
         import os
         
+        temp_path = None
         try:
-            # 创建临时文件
+            # 1. 读取原始音频文件
+            sample_rate, audio_data, num_channels, bits_per_sample = self._read_wav_file_pure_numpy(input_file)
+            
+            logger.info(f"🔧 使用 numpy 标准化音频: {input_file}")
+            logger.info(f"   目标 RMS: {target_rms_db} dB")
+            logger.info(f"   峰值限制: {peak_db} dB")
+            
+            # 2. 计算当前 RMS（均方根）
+            # RMS = sqrt(mean(samples^2))
+            current_rms = np.sqrt(np.mean(audio_data ** 2))
+            
+            if current_rms < 1e-10:  # 静音检测
+                logger.warning("⚠️ 检测到静音音频，跳过标准化")
+                # 直接复制原文件
+                temp_fd, temp_path = tempfile.mkstemp(suffix='.wav', prefix='normalized_')
+                os.close(temp_fd)
+                import shutil
+                shutil.copy2(input_file, temp_path)
+                return temp_path
+            
+            # 3. 计算目标 RMS（从 dB 转换为线性值）
+            # dB = 20 * log10(amplitude)
+            # amplitude = 10^(dB/20)
+            target_rms_linear = 10 ** (target_rms_db / 20.0)
+            
+            # 4. 计算增益因子
+            gain = target_rms_linear / current_rms
+            
+            logger.info(f"   当前 RMS: {current_rms:.6f} ({20 * np.log10(current_rms):.2f} dB)")
+            logger.info(f"   目标 RMS: {target_rms_linear:.6f} ({target_rms_db:.2f} dB)")
+            logger.info(f"   增益因子: {gain:.4f} ({20 * np.log10(gain):.2f} dB)")
+            
+            # 5. 应用增益
+            normalized_audio = audio_data * gain
+            
+            # 6. 峰值限制（防止削波）
+            peak_linear = 10 ** (peak_db / 20.0)
+            current_peak = np.max(np.abs(normalized_audio))
+            
+            if current_peak > peak_linear:
+                # 需要限制峰值
+                peak_gain = peak_linear / current_peak
+                normalized_audio = normalized_audio * peak_gain
+                logger.info(f"   峰值限制: {current_peak:.4f} -> {peak_linear:.4f} (降低 {20 * np.log10(peak_gain):.2f} dB)")
+            else:
+                logger.info(f"   峰值正常: {current_peak:.4f} < {peak_linear:.4f}")
+            
+            # 7. 最终削波保护（硬限制在 [-1.0, 1.0]）
+            normalized_audio = np.clip(normalized_audio, -1.0, 1.0)
+            
+            # 8. 创建临时文件
             temp_fd, temp_path = tempfile.mkstemp(suffix='.wav', prefix='normalized_')
-            os.close(temp_fd)  # 关闭文件描述符，sox会重新创建文件
+            os.close(temp_fd)
             
-            # 构建 sox 命令
-            # norm -20: 标准化RMS到-20dB
-            # gain -n: 标准化峰值到-3dB，防止削波
-            cmd = [
-                'sox', 
-                input_file, 
-                temp_path,
-                'norm', str(target_rms),  # 标准化RMS
-                'gain', '-n'              # 标准化峰值，防止削波
-            ]
+            # 9. 写入标准化后的音频
+            self._write_wav_file_pure_numpy(temp_path, sample_rate, normalized_audio, bits_per_sample)
             
-            logger.info(f"🔧 使用 sox 标准化音频: {input_file} -> {temp_path}")
-            logger.debug(f"sox 命令: {' '.join(cmd)}")
-            
-            # 执行 sox 命令
-            result = subprocess.run(
-                cmd, 
-                capture_output=True, 
-                text=True, 
-                timeout=30  # 30秒超时
-            )
-            
-            if result.returncode != 0:
-                raise RuntimeError(f"sox 处理失败: {result.stderr}")
-            
-            # 验证输出文件是否存在且不为空
+            # 10. 验证输出文件
             if not os.path.exists(temp_path) or os.path.getsize(temp_path) == 0:
-                raise RuntimeError("sox 输出文件为空或不存在")
+                raise RuntimeError("标准化输出文件为空或不存在")
             
-            logger.info(f"✅ sox 标准化完成: {os.path.getsize(temp_path)} bytes")
+            logger.info(f"✅ numpy 标准化完成: {os.path.getsize(temp_path)} bytes")
             return temp_path
             
-        except subprocess.TimeoutExpired:
-            # 清理临时文件
-            if 'temp_path' in locals() and os.path.exists(temp_path):
-                os.unlink(temp_path)
-            raise RuntimeError("sox 处理超时")
         except Exception as e:
             # 清理临时文件
-            if 'temp_path' in locals() and os.path.exists(temp_path):
-                os.unlink(temp_path)
-            raise RuntimeError(f"sox 标准化失败: {e}")
+            if temp_path and os.path.exists(temp_path):
+                try:
+                    os.unlink(temp_path)
+                except:
+                    pass
+            raise RuntimeError(f"numpy 标准化失败: {e}")
 
     def _cleanup_temp_file(self, file_path: str):
         """清理临时文件"""
@@ -346,7 +542,7 @@ class AudioPlayer:
 
     def play_file(self, file_path: str, volume: float = 1.0):
         """
-        播放单个文件（使用 sox 标准化音量）
+        播放单个文件（使用 numpy 标准化音量）
         
         Args:
             file_path: 音频文件路径
@@ -360,9 +556,9 @@ class AudioPlayer:
 
         normalized_file = None
         try:
-            # 使用 sox 标准化音频文件
+            # 使用 numpy 标准化音频文件
             logger.info(f"🎵 开始播放文件: {file_path}")
-            normalized_file = self._normalize_audio_with_sox(file_path)
+            normalized_file = self._normalize_audio_with_numpy(file_path)
             
             # 构建aplay命令
             cmd = ['aplay', '-q']
@@ -383,12 +579,12 @@ class AudioPlayer:
             
         except Exception as e:
             logger.error(f"❌ 播放失败: {e}")
-            # 如果 sox 标准化失败，尝试直接播放原文件
+            # 如果 numpy 标准化失败，尝试直接播放原文件
             if normalized_file:
                 self._cleanup_temp_file(normalized_file)
                 normalized_file = None
             
-            logger.warning(f"⚠️ sox 标准化失败，尝试直接播放原文件: {file_path}")
+            logger.warning(f"⚠️ numpy 标准化失败，尝试直接播放原文件: {file_path}")
             try:
                 cmd = ['aplay', '-q']
                 self.set_volume(volume)
