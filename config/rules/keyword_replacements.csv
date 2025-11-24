@@ -1,0 +1,8 @@
+replacement_id,original_word,replacement_word,enabled,description
+1,堆垛,堆堕,TRUE,TTS发音优化-堆垛替换为堆堕
+2,AGV,埃及威,TRUE,TTS发音优化-AGV替换为埃及威
+3,agv,埃及威,TRUE,TTS发音优化-agv替换为埃及威
+4,V,福特,TRUE,TTS发音优化-V替换为福特（仅在数字后）
+5,℃,摄氏度,TRUE,TTS发音优化-℃替换为摄氏度（仅在数字后）
+6,I,安培,TRUE,TTS发音优化-I替换为安培（仅在数字后）
+

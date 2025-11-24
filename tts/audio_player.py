@@ -48,6 +48,7 @@
 6. 对话模式期间，系统专注于对话交互，不响应音乐播放请求
 """
 
+
 # 移除对本地TTS的导入，改为使用远程HTTP服务
 # from tts.standard_tts import TTSApp
 import requests
@@ -83,13 +84,47 @@ sys.path.insert(0, str(project_root))
 # 配置日志
 logger = logging.getLogger(__name__)
 
+# 导入数据库配置读取函数（复用dialog模块中的函数）
+try:
+    from dialog.dialog_recognize import get_para_value
+except ImportError:
+    # 如果导入失败，定义备用函数
+    def get_para_value(key: str):
+        logger.warning(f"无法导入get_para_value，使用默认值")
+        return None
+
 # TTS服务配置
 class TTSServiceConfig:
     """远程TTS服务配置"""
     def __init__(self):
-        # 从环境变量或配置文件读取服务地址
-        self.service_url = os.getenv('TTS_SERVICE_URL', 'http://172.17.0.2:5000')
-        self.timeout = int(os.getenv('TTS_TIMEOUT', '30'))
+        # 优先从数据库读取配置，如果数据库没有则使用环境变量或默认值
+        self._load_config()
+    
+    def _load_config(self):
+        """加载配置：优先从数据库读取，否则使用环境变量或默认值"""
+        # 从数据库读取TTS服务URL
+        db_url = get_para_value("hmi.tts_service_url")
+        if db_url:
+            self.service_url = db_url
+            logger.info(f"从数据库读取TTS服务URL: {self.service_url}")
+        else:
+            # 从环境变量或默认值读取
+            self.service_url = os.getenv('TTS_SERVICE_URL', 'http://172.17.0.2:5000')
+            logger.info(f"使用环境变量/默认值TTS服务URL: {self.service_url}")
+        
+        # 从数据库读取超时配置
+        db_timeout = get_para_value("hmi.tts_timeout")
+        if db_timeout:
+            self.timeout = int(db_timeout)
+            logger.info(f"从数据库读取TTS超时: {self.timeout}")
+        else:
+            # 从环境变量或默认值读取
+            self.timeout = int(os.getenv('TTS_TIMEOUT', '30'))
+            logger.info(f"使用环境变量/默认值TTS超时: {self.timeout}")
+    
+    def reload_config(self):
+        """重新加载配置（用于运行时更新）"""
+        self._load_config()
     
     def get_synthesize_url(self):
         """获取语音合成接口URL"""

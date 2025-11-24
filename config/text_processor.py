@@ -55,6 +55,9 @@ class TextProcessor:
             # 特殊字符移除规则（新增）
             self.special_chars_rules = self.config_loader.get_enabled_items('special_chars_removal')
             
+            # 关键词替换规则（新增）
+            self.replacement_rules = self.config_loader.get_enabled_items('keyword_replacements')
+            
             # 数字处理配置
             self.number_config = {
                 'decimal_places': self.config_loader.get_config_value('number_processing_config', 'decimal_places', 2),
@@ -63,7 +66,7 @@ class TextProcessor:
                 'keyword_max_search_chars': self.config_loader.get_config_value('number_processing_config', 'keyword_max_search_chars', 10),
             }
             
-            _logger.info(f"✅ 文本处理器配置加载完成: {len(self.symbol_rules)}条符号规则, {len(self.identifier_keywords)}个关键词, {len(self.spoken_digit_rules)}条口语规则, {len(self.abbreviation_rules)}个缩写词, {len(self.special_chars_rules)}个特殊字符")
+            _logger.info(f"✅ 文本处理器配置加载完成: {len(self.symbol_rules)}条符号规则, {len(self.identifier_keywords)}个关键词, {len(self.spoken_digit_rules)}条口语规则, {len(self.abbreviation_rules)}个缩写词, {len(self.special_chars_rules)}个特殊字符, {len(self.replacement_rules)}个关键词替换规则")
         
         except Exception as e:
             _logger.error(f"❌ 加载配置失败: {e}")
@@ -86,6 +89,116 @@ class TextProcessor:
             replacement = rule.get('replacement', '')
             if original and replacement:
                 result = result.replace(original, replacement)
+        
+        return result
+    
+    def process_keyword_replacements(self, text: str) -> str:
+        """
+        处理关键词替换（基于配置）
+        
+        从 config/rules/keyword_replacements.csv 读取替换规则
+        将发音不清晰的词替换为发音清晰的词
+        
+        示例:
+        - "堆垛" → "堆堕"
+        - "AGV" → "埃及威"
+        
+        参数:
+            text: 原始文本
+        
+        返回:
+            处理后的文本
+        """
+        if not text:
+            return text
+        
+        # 从配置加载替换规则
+        replacements = {}
+        for rule in self.replacement_rules:
+            original = rule.get('original_word', '')
+            replacement = rule.get('replacement_word', '')
+            if original and replacement:
+                replacements[original] = replacement
+        
+        if not replacements:
+            return text
+        
+        # 按长度排序（长的优先匹配，避免部分匹配）
+        sorted_words = sorted(replacements.keys(), key=len, reverse=True)
+        
+        result = text
+        
+        # 先处理单位替换（需要特殊处理：只替换数字后的单位）
+        # 定义单位字符列表
+        unit_chars = {'V': '福特', '℃': '摄氏度', 'I': '安培'}
+        
+        for original in sorted_words:
+            replacement = replacements[original]
+            
+            # 如果是单位字符，使用特殊的正则匹配（只匹配数字后的单位）
+            if original in unit_chars:
+                # 匹配模式：数字（整数或小数）+ 单位
+                # 支持：26.5V, 32.0℃, 26.5I, 26V, 32℃等
+                # 正则：(\d+\.?\d*)(V|℃|I) - 匹配数字（可选小数点）+ 单位
+                pattern = r'(\d+\.?\d*)' + re.escape(original)
+                replacement_with_number = r'\1' + replacement
+                new_result = re.sub(pattern, replacement_with_number, result)
+                if new_result != result:
+                    _logger.debug(f"🔄 单位替换: 数字+'{original}' → 数字+'{replacement}'")
+                    result = new_result
+                continue
+            
+            # 判断是英文单词还是中文词
+            is_english_word = bool(re.match(r'^[a-zA-Z]+$', original))
+            
+            if is_english_word:
+                # 英文单词：先处理带空格的变体（如 "A G V"、"a g v"、"A    G       V"）
+                # 对于多字母单词，生成带空格的变体模式
+                if len(original) > 1:
+                    # 构建字母间带空格的模式：每个字母之间可以有1个或多个空格
+                    # 例如：AGV -> [Aa]\s+[Gg]\s+[Vv]
+                    letters = list(original)
+                    spaced_pattern_parts = []
+                    for i, letter in enumerate(letters):
+                        if i > 0:
+                            spaced_pattern_parts.append(r'\s+')  # 字母之间有一个或多个空格
+                        # 匹配大小写不敏感
+                        spaced_pattern_parts.append(f'[{letter.upper()}{letter.lower()}]')
+                    
+                    spaced_pattern = ''.join(spaced_pattern_parts)
+                    # 添加词边界：前后不能是字母
+                    spaced_pattern = r'(?<![a-zA-Z])' + spaced_pattern + r'(?![a-zA-Z])'
+                    
+                    # 先替换带空格的变体
+                    new_result = re.sub(spaced_pattern, replacement, result)
+                    if new_result != result:
+                        _logger.debug(f"🔄 关键词替换（带空格）: '{original}' → '{replacement}'")
+                        result = new_result
+                
+                # 再处理连续字母的变体（如 "AGV"、"agv"）
+                # 匹配模式：前面不能是字母（但可以是数字、中文、标点、开头）
+                #           后面不能是字母（但可以是数字、中文、标点、结尾）
+                # 这样可以匹配：句子开头、末尾、中间、与中文/数字/标点相邻的情况
+                # 注意：允许与数字相邻（如AGV123、123AGV），但不允许与字母相邻（如AGVabc）
+                pattern = r'(?<![a-zA-Z])' + re.escape(original) + r'(?![a-zA-Z])'
+            else:
+                # 中文词：使用特殊处理，避免部分匹配
+                pattern = re.escape(original)
+                
+                # 特殊处理：如果原始词的最后一个字符可能重复（如"堆垛"后面可能跟"垛"）
+                # 检查后面不是该字符，避免部分匹配
+                # 例如："堆垛" → "堆堕"，检查后面不是"垛"，避免匹配"堆垛垛"中的"堆垛"
+                if len(original) > 0:
+                    last_char = original[-1]
+                    # 如果最后一个字符可能重复，添加负向前瞻
+                    pattern = pattern + f'(?!{re.escape(last_char)})'
+            
+            # 执行替换（对于英文单词，这里处理连续字母的变体）
+            if original in result or (is_english_word and len(original) > 1):
+                new_result = re.sub(pattern, replacement, result)
+                if new_result != result:
+                    _logger.debug(f"🔄 关键词替换: '{original}' → '{replacement}'")
+                    result = new_result
         
         return result
     
@@ -497,6 +610,147 @@ class TextProcessor:
         _logger.debug(f"📝 数值类: {number_str} → {result}")
         return result
     
+    def date_to_chinese(self, year: str, month: str, day: str) -> str:
+        """
+        将日期转换为中文格式
+        
+        参数:
+            year: 年份字符串（4位数字）
+            month: 月份字符串（1-2位数字）
+            day: 日期字符串（1-2位数字）
+        
+        返回:
+            中文日期字符串，如"二零二五年七月二十九日"
+        
+        示例:
+            date_to_chinese("2025", "07", "29") → "二零二五年七月二十九日"
+            date_to_chinese("2025", "7", "9") → "二零二五年七月九日"
+        """
+        # 数字映射
+        digits = ["零", "一", "二", "三", "四", "五", "六", "七", "八", "九"]
+        month_names = ["", "一", "二", "三", "四", "五", "六", "七", "八", "九", "十", "十一", "十二"]
+        
+        # 年份：逐位转换
+        year_chinese = "".join([digits[int(d)] for d in year])
+        
+        # 月份：转换为整数后按数值读
+        month_int = int(month)
+        if 1 <= month_int <= 12:
+            month_chinese = month_names[month_int] + "月"
+        else:
+            # 无效月份，保持原样
+            month_chinese = month + "月"
+        
+        # 日期：转换为整数后按数值读
+        day_int = int(day)
+        if 1 <= day_int <= 31:
+            # 使用number_to_chinese转换日期
+            day_chinese = self.number_to_chinese(day_int) + "日"
+        else:
+            # 无效日期，保持原样
+            day_chinese = day + "日"
+        
+        return f"{year_chinese}年{month_chinese}{day_chinese}"
+    
+    def process_dates(self, text: str) -> str:
+        """
+        处理日期格式：YYYY-MM-DD, YYYY.MM.DD, YYYY年MM月DD日
+        
+        转换为中文日期：二零二五年七月二十九日
+        
+        不处理斜杠分隔的日期（如：2025/07/29）
+        
+        参数:
+            text: 原始文本
+        
+        返回:
+            处理后的文本
+        
+        示例:
+            "2025-07-29" → "二零二五年七月二十九日"
+            "2025.07.29" → "二零二五年七月二十九日"
+            "2025-7-9" → "二零二五年七月九日"
+            "2025年7月29日" → "二零二五年七月二十九日"
+            "2025年07月29日" → "二零二五年七月二十九日"
+            "2025/07/29" → "2025/07/29"（保持不变，不处理）
+        """
+        if not text:
+            return text
+        
+        # 1. 先处理中文日期格式：YYYY年MM月DD日
+        pattern_chinese = r'\d{4}年\d{1,2}月\d{1,2}日'
+        
+        def replace_chinese_date(match):
+            date_str = match.group(0)
+            
+            # 提取年、月、日
+            # 使用正则提取：2025年7月29日
+            match_parts = re.match(r'(\d{4})年(\d{1,2})月(\d{1,2})日', date_str)
+            if match_parts:
+                year, month, day = match_parts.groups()
+                
+                # 基本验证：确保年份是4位，月份和日期在合理范围内
+                if len(year) == 4 and year.isdigit():
+                    try:
+                        month_int = int(month)
+                        day_int = int(day)
+                        
+                        # 验证月份和日期范围
+                        if 1 <= month_int <= 12 and 1 <= day_int <= 31:
+                            # 转换为中文日期
+                            chinese_date = self.date_to_chinese(year, month, day)
+                            _logger.debug(f"📅 中文日期转换: '{date_str}' → '{chinese_date}'")
+                            return chinese_date
+                    except ValueError:
+                        # 转换失败，保持原样
+                        pass
+            
+            # 验证失败或格式错误，保持原样
+            return date_str
+        
+        # 先处理中文日期格式
+        text = re.sub(pattern_chinese, replace_chinese_date, text)
+        
+        # 2. 再处理横杠和点分隔的日期格式：YYYY-MM-DD, YYYY.MM.DD
+        # 使用负向前瞻和负向后顾，确保前后不是数字或中文字符
+        # \d{4} 匹配4位年份
+        # [-.] 匹配 -、. 两种分隔符（不包含斜杠）
+        # \d{1,2} 匹配1-2位月份和日期
+        # 使用 (?<![0-9年月日]) 和 (?![0-9年月日]) 确保前后不是数字或中文字符
+        pattern = r'(?<![0-9年月日])\d{4}[-.]\d{1,2}[-.]\d{1,2}(?![0-9年月日])'
+        
+        def replace_date(match):
+            date_str = match.group(0)
+            
+            # 提取分隔符和数字部分
+            # 使用正则提取年、月、日（只匹配横杠和点）
+            parts = re.split(r'[-.]', date_str)
+            
+            if len(parts) == 3:
+                year, month, day = parts
+                
+                # 基本验证：确保年份是4位，月份和日期在合理范围内
+                if len(year) == 4 and year.isdigit():
+                    try:
+                        month_int = int(month)
+                        day_int = int(day)
+                        
+                        # 验证月份和日期范围
+                        if 1 <= month_int <= 12 and 1 <= day_int <= 31:
+                            # 转换为中文日期
+                            chinese_date = self.date_to_chinese(year, month, day)
+                            _logger.debug(f"📅 日期转换: '{date_str}' → '{chinese_date}'")
+                            return chinese_date
+                    except ValueError:
+                        # 转换失败，保持原样
+                        pass
+            
+            # 验证失败或格式错误，保持原样
+            return date_str
+        
+        result = re.sub(pattern, replace_date, text)
+        return result
+    
     def process_percentages(self, text: str) -> str:
         """
         处理百分比
@@ -555,8 +809,10 @@ class TextProcessor:
             1. 移除特殊字符
             2. 处理缩写词
             3. 符号标准化（全角转半角）
-            4. 百分比处理
-            5. 数字和小数处理
+            4. 处理关键词替换（TTS发音优化）
+            5. 处理日期（YYYY-MM-DD、YYYY.MM.DD、YYYY年MM月DD日格式转中文）
+            6. 百分比处理
+            7. 数字和小数处理
         
         参数:
             text: 原始文本
@@ -573,19 +829,27 @@ class TextProcessor:
         text = self.remove_special_chars(text)
         _logger.debug(f"🗑️ 特殊字符移除: {text}")
         
-        # 2. 处理缩写词（新增）
-        text = self.process_abbreviations(text)
-        _logger.debug(f"🔤 缩写词处理: {text}")
-        
-        # 3. 符号标准化
+        # 2. 符号标准化（全角转半角）- 必须在关键词替换之前，确保全角符号先转换
         text = self.normalize_symbols(text)
         _logger.debug(f"🔄 符号标准化: {text}")
         
-        # 4. 百分比处理
+        # 3. 处理关键词替换（新增）- 在缩写词处理之前，确保AGV等词先被替换
+        text = self.process_keyword_replacements(text)
+        _logger.debug(f"🔄 关键词替换: {text}")
+        
+        # 4. 处理缩写词（新增）
+        text = self.process_abbreviations(text)
+        _logger.debug(f"🔤 缩写词处理: {text}")
+        
+        # 5. 处理日期（新增）
+        text = self.process_dates(text)
+        _logger.debug(f"📅 日期处理: {text}")
+        
+        # 6. 百分比处理
         text = self.process_percentages(text)
         _logger.debug(f"📊 百分比处理: {text}")
         
-        # 5. 数字和小数处理
+        # 7. 数字和小数处理
         text = self.process_decimals(text)
         _logger.debug(f"🔢 数字处理: {text}")
         

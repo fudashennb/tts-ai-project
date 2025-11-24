@@ -1,0 +1,376 @@
+﻿时间戳,success,text,filename,message
+2025-11-20 14:47:10,True,<|en|>hi g v,temp_vad_recording_1763621230.wav,识别成功
+2025-11-20 14:47:20,True,<|en|>hi juvi,temp_vad_recording_1763621240.wav,识别成功
+2025-11-20 14:47:25,True,<|yue|>系朱 v,temp_vad_recording_1763621245.wav,识别成功
+2025-11-20 14:47:29,True,<|yue|>系 a g v,temp_vad_recording_1763621248.wav,识别成功
+2025-11-20 14:47:34,True,<|en|>hi g v,temp_vad_recording_1763621254.wav,识别成功
+2025-11-20 14:47:40,True,<|yue|>系 g v,temp_vad_recording_1763621260.wav,识别成功
+2025-11-20 14:47:50,True,<|yue|>系 a g v,temp_vad_recording_1763621270.wav,识别成功
+2025-11-20 14:48:05,True,<|yue|>hi a g v,temp_vad_recording_1763621285.wav,识别成功
+2025-11-20 14:48:08,True,<|yue|>hi朱意,temp_vad_recording_1763621287.wav,识别成功
+2025-11-20 14:48:10,True,<|yue|>hi g v,temp_vad_recording_1763621290.wav,识别成功
+2025-11-20 14:48:16,True,<|en|>hi julie,temp_vad_recording_1763621296.wav,识别成功
+2025-11-20 14:48:19,True,<|en|>hi g v,temp_vad_recording_1763621299.wav,识别成功
+2025-11-20 14:48:22,True,<|en|>hi juvi,temp_vad_recording_1763621302.wav,识别成功
+2025-11-20 14:48:25,True,hi ju,temp_vad_recording_1763621305.wav,识别成功
+2025-11-20 14:48:29,True,<|en|>hi ki we,temp_vad_recording_1763621309.wav,识别成功
+2025-11-20 14:48:32,True,<|yue|>hi朱,temp_vad_recording_1763621312.wav,识别成功
+2025-11-20 14:48:35,True,<|en|>hi ju,temp_vad_recording_1763621315.wav,识别成功
+2025-11-20 14:48:38,True,hi a g v,temp_vad_recording_1763621317.wav,识别成功
+2025-11-20 14:48:42,True,<|en|>hi ju v,temp_vad_recording_1763621321.wav,识别成功
+2025-11-20 14:48:53,True,<|yue|>系 a g v,temp_vad_recording_1763621332.wav,识别成功
+2025-11-20 14:49:06,True,<|en|>hi ju,temp_vad_recording_1763621346.wav,识别成功
+2025-11-20 14:49:18,True,<|en|>hi ju,temp_vad_recording_1763621358.wav,识别成功
+2025-11-20 14:49:41,True,<|en|>hi ju,temp_vad_recording_1763621381.wav,识别成功
+2025-11-20 14:49:44,True,派 a军,temp_vad_recording_1763621384.wav,识别成功
+2025-11-20 14:49:47,True,<|yue|>系 a g v,temp_vad_recording_1763621387.wav,识别成功
+2025-11-20 14:49:51,True,<|yue|>系 g v,temp_vad_recording_1763621390.wav,识别成功
+2025-11-20 14:49:54,True,拍 a g v,temp_vad_recording_1763621394.wav,识别成功
+2025-11-20 14:49:58,True,hi g v,temp_vad_recording_1763621397.wav,识别成功
+2025-11-20 14:50:15,True,<|en|>hi ju,temp_vad_recording_1763621414.wav,识别成功
+2025-11-20 14:50:18,True,<|yue|>系 a g,temp_vad_recording_1763621418.wav,识别成功
+2025-11-20 14:50:22,True,<|yue|>拍 a g v,temp_vad_recording_1763621422.wav,识别成功
+2025-11-20 14:50:25,True,<|yue|>睇 g v,temp_vad_recording_1763621425.wav,识别成功
+2025-11-20 14:50:29,True,<|en|>拍 a g v,temp_vad_recording_1763621429.wav,识别成功
+2025-11-20 14:50:40,True,<|yue|>系 a g v,temp_vad_recording_1763621440.wav,识别成功
+2025-11-20 14:50:44,True,<|en|>hi julie,temp_vad_recording_1763621444.wav,识别成功
+2025-11-20 14:50:48,True,<|en|>hi ju,temp_vad_recording_1763621448.wav,识别成功
+
+2025-11-20 15:17:09,True,<|en|>hi a g a,temp_vad_recording_1763623029.wav,识别成功
+2025-11-20 15:17:11,True,<|en|>hi a g a,temp_vad_recording_1763623031.wav,识别成功
+2025-11-20 15:17:14,True,<|en|>hi a g,temp_vad_recording_1763623033.wav,识别成功
+
+2025-11-20 15:17:22,True,太 a g v,temp_vad_recording_1763623042.wav,识别成功
+2025-11-20 15:17:23,True,<|en|>hi ajo,temp_vad_recording_1763623043.wav,识别成功
+2025-11-20 15:17:25,True,<|en|>hi a g a,temp_vad_recording_1763623045.wav,识别成功
+2025-11-20 15:17:27,True,<|en|>hi ag,temp_vad_recording_1763623047.wav,识别成功
+2025-11-20 15:17:29,True,<|en|>hi he two e,temp_vad_recording_1763623049.wav,识别成功
+2025-11-20 15:17:30,True,<|en|>hi,temp_vad_recording_1763623050.wav,识别成功
+
+2025-11-20 15:17:32,True,<|en|>hi a g,temp_vad_recording_1763623052.wav,识别成功
+2025-11-20 15:17:34,True,<|en|>hi a g v,temp_vad_recording_1763623054.wav,识别成功
+2025-11-20 15:17:35,True,hiい,temp_vad_recording_1763623055.wav,识别成功
+
+
+
+
+
+2025-11-20 15:17:46,True,<|en|>heju,temp_vad_recording_1763623066.wav,识别成功
+
+
+2025-11-20 15:19:39,True,<|en|>heju,temp_vad_recording_1763623178.wav,识别成功
+2025-11-20 15:19:41,True,<|en|>hi a g v,temp_vad_recording_1763623180.wav,识别成功
+
+
+2025-11-20 15:19:45,True,<|en|>hi a g e,temp_vad_recording_1763623184.wav,识别成功
+2025-11-20 15:19:47,True,<|en|>hey hey ju,temp_vad_recording_1763623186.wav,识别成功
+
+2025-11-20 15:19:50,True,<|en|>hi,temp_vad_recording_1763623189.wav,识别成功
+2025-11-20 15:19:50,True,<|en|>hejo,temp_vad_recording_1763623190.wav,识别成功
+
+2025-11-20 15:19:52,True,<|en|>he drew it,temp_vad_recording_1763623192.wav,识别成功
+2025-11-20 15:19:55,True,<|en|>hi a jui,temp_vad_recording_1763623195.wav,识别成功
+2025-11-20 15:19:58,True,<|en|>hi a j,temp_vad_recording_1763623198.wav,识别成功
+2025-11-20 15:20:00,True,<|en|>hi aju,temp_vad_recording_1763623200.wav,识别成功
+
+2025-11-20 15:20:06,True,<|en|>hi a g e,temp_vad_recording_1763623206.wav,识别成功
+2025-11-20 15:20:08,True,<|en|>hi a g v,temp_vad_recording_1763623207.wav,识别成功
+2025-11-20 15:20:09,True,<|en|>hi a g,temp_vad_recording_1763623209.wav,识别成功
+2025-11-20 15:20:11,True,<|en|>hi h g v,temp_vad_recording_1763623210.wav,识别成功
+2025-11-20 15:20:12,True,<|en|>hi aju,temp_vad_recording_1763623212.wav,识别成功
+
+2025-11-20 15:20:17,True,<|en|>hi aju,temp_vad_recording_1763623216.wav,识别成功
+
+2025-11-20 15:20:19,True,<|en|>at aju,temp_vad_recording_1763623219.wav,识别成功
+2025-11-20 15:20:21,True,<|en|>hi a g,temp_vad_recording_1763623221.wav,识别成功
+
+2025-11-20 15:20:23,True,<|ja|>hiい,temp_vad_recording_1763623223.wav,识别成功
+
+2025-11-20 15:20:36,True,<|en|>hi,temp_vad_recording_1763623236.wav,识别成功
+2025-11-20 15:20:37,True,<|en|>hey ju,temp_vad_recording_1763623236.wav,识别成功
+
+2025-11-20 15:20:42,True,<|en|>hi a g,temp_vad_recording_1763623242.wav,识别成功
+
+
+2025-11-20 15:21:09,True,hiい,temp_vad_recording_1763623269.wav,识别成功
+
+
+2025-11-20 15:21:28,True,<|en|>hi heju,temp_vad_recording_1763623288.wav,识别成功
+
+
+2025-11-20 15:21:32,True,<|en|>hi aj,temp_vad_recording_1763623291.wav,识别成功
+
+
+2025-11-20 15:21:46,True,<|en|>hi aju,temp_vad_recording_1763623306.wav,识别成功
+2025-11-20 15:21:48,True,<|en|>hi a g,temp_vad_recording_1763623308.wav,识别成功
+2025-11-20 15:21:51,True,<|en|>hi a g,temp_vad_recording_1763623310.wav,识别成功
+2025-11-20 15:21:53,True,<|en|>hi a g v,temp_vad_recording_1763623313.wav,识别成功
+2025-11-20 15:21:56,True,<|en|>hi a j a,temp_vad_recording_1763623316.wav,识别成功
+2025-11-20 15:21:58,True,<|en|>hi a g a,temp_vad_recording_1763623318.wav,识别成功
+2025-11-20 15:22:01,True,<|en|>hi a g,temp_vad_recording_1763623321.wav,识别成功
+2025-11-20 15:22:04,True,<|en|>hi a g,temp_vad_recording_1763623323.wav,识别成功
+2025-11-20 15:22:06,True,hi a j,temp_vad_recording_1763623326.wav,识别成功
+2025-11-20 15:22:09,True,<|en|>hi a g,temp_vad_recording_1763623329.wav,识别成功
+2025-11-20 15:22:12,True,<|en|>hi a g,temp_vad_recording_1763623332.wav,识别成功
+2025-11-20 15:22:15,True,<|en|>hi aj,temp_vad_recording_1763623335.wav,识别成功
+2025-11-20 15:22:18,True,<|en|>hi a g a,temp_vad_recording_1763623338.wav,识别成功
+2025-11-20 15:22:21,True,<|en|>hi a,temp_vad_recording_1763623340.wav,识别成功
+2025-11-20 15:22:23,True,<|en|>hi hej,temp_vad_recording_1763623343.wav,识别成功
+2025-11-20 15:22:26,True,<|en|>hi hej,temp_vad_recording_1763623346.wav,识别成功
+2025-11-20 15:22:29,True,<|en|>hi ajo,temp_vad_recording_1763623349.wav,识别成功
+2025-11-20 15:22:32,True,<|en|>hi a g,temp_vad_recording_1763623351.wav,识别成功
+2025-11-20 15:22:34,True,<|en|>hi aja a,temp_vad_recording_1763623354.wav,识别成功
+2025-11-20 15:22:38,True,<|en|>hi a g a,temp_vad_recording_1763623357.wav,识别成功
+
+2025-11-20 15:22:42,True,<|en|>hi aj,temp_vad_recording_1763623362.wav,识别成功
+
+2025-11-20 15:22:47,True,<|en|>hi a g a,temp_vad_recording_1763623367.wav,识别成功
+
+
+2025-11-20 15:22:55,True,<|en|>hi a g,temp_vad_recording_1763623375.wav,识别成功
+2025-11-20 15:22:57,True,<|en|>hi a g,temp_vad_recording_1763623377.wav,识别成功
+2025-11-20 15:23:00,True,<|en|>hi heju,temp_vad_recording_1763623380.wav,识别成功
+2025-11-20 15:23:02,True,<|en|>hi aj,temp_vad_recording_1763623382.wav,识别成功
+2025-11-20 15:23:05,True,<|en|>hi aj,temp_vad_recording_1763623385.wav,识别成功
+2025-11-20 15:23:08,True,<|en|>hi aj,temp_vad_recording_1763623388.wav,识别成功
+2025-11-20 15:23:11,True,<|en|>hi a,temp_vad_recording_1763623390.wav,识别成功
+2025-11-20 15:23:13,True,<|en|>hi aja,temp_vad_recording_1763623393.wav,识别成功
+
+
+2025-11-20 15:23:22,True,<|en|>hi a g,temp_vad_recording_1763623401.wav,识别成功
+2025-11-20 15:23:24,True,<|en|>hi a g a,temp_vad_recording_1763623404.wav,识别成功
+2025-11-20 15:23:26,True,<|en|>hi heyre,temp_vad_recording_1763623406.wav,识别成功
+2025-11-20 15:23:29,True,<|en|>hi h a,temp_vad_recording_1763623409.wav,识别成功
+2025-11-20 15:23:32,True,hi a g a,temp_vad_recording_1763623411.wav,识别成功
+2025-11-20 15:23:34,True,<|en|>hi a g a,temp_vad_recording_1763623414.wav,识别成功
+2025-11-20 15:23:36,True,<|en|>hi aj,temp_vad_recording_1763623416.wav,识别成功
+2025-11-20 15:23:38,True,<|en|>hi a j,temp_vad_recording_1763623418.wav,识别成功
+2025-11-20 15:23:41,True,hi a g a,temp_vad_recording_1763623420.wav,识别成功
+2025-11-20 15:23:43,True,hi h g a,temp_vad_recording_1763623422.wav,识别成功
+2025-11-20 15:23:45,True,<|en|>hi a g a,temp_vad_recording_1763623425.wav,识别成功
+2025-11-20 15:23:47,True,<|en|>hi aj,temp_vad_recording_1763623427.wav,识别成功
+2025-11-20 15:23:50,True,<|en|>hi ajo,temp_vad_recording_1763623430.wav,识别成功
+2025-11-20 15:23:52,True,hi a g a,temp_vad_recording_1763623432.wav,识别成功
+2025-11-20 15:23:56,True,<|en|>hi a,temp_vad_recording_1763623436.wav,识别成功
+2025-11-20 15:23:59,True,<|en|>hi aj,temp_vad_recording_1763623438.wav,识别成功
+
+
+2025-11-20 15:24:04,True,<|en|>hi ajo,temp_vad_recording_1763623444.wav,识别成功
+
+2025-11-20 15:24:08,True,<|en|>hi a g a,temp_vad_recording_1763623448.wav,识别成功
+
+
+
+
+
+2025-11-20 15:32:01,True,<|en|>hi ag v,temp_vad_recording_1763623921.wav,识别成功
+
+2025-11-20 15:32:16,True,<|en|>hi a,temp_vad_recording_1763623935.wav,识别成功
+
+2025-11-20 15:32:32,True,<|yue|>系聚 v,temp_vad_recording_1763623951.wav,识别成功
+
+2025-11-20 15:32:50,True,<|en|>hey a av,temp_vad_recording_1763623970.wav,识别成功
+2025-11-20 15:32:53,True,配 a g v,temp_vad_recording_1763623972.wav,识别成功
+2025-11-20 15:32:55,True,<|en|>hey h v,temp_vad_recording_1763623975.wav,识别成功
+
+
+2025-11-20 15:33:03,True,<|en|>hi aja,temp_vad_recording_1763623983.wav,识别成功
+
+2025-11-20 15:33:09,True,<|yue|>hi a,temp_vad_recording_1763623988.wav,识别成功
+
+
+
+
+
+
+2025-11-20 15:37:15,True,<|en|>hi a ju a,temp_vad_recording_1763624234.wav,识别成功
+
+2025-11-20 15:37:20,True,<|en|>hi h v,temp_vad_recording_1763624239.wav,识别成功
+2025-11-20 15:37:22,True,<|en|>hi h g v,temp_vad_recording_1763624241.wav,识别成功
+
+2025-11-20 15:37:38,True,<|en|>hi a v,temp_vad_recording_1763624258.wav,识别成功
+
+
+2025-11-20 15:37:44,True,hi h v,temp_vad_recording_1763624264.wav,识别成功
+
+2025-11-20 15:37:48,True,<|en|>hejuy,temp_vad_recording_1763624268.wav,识别成功
+
+2025-11-20 15:37:52,True,<|en|>hi a,temp_vad_recording_1763624272.wav,识别成功
+
+2025-11-20 15:38:12,True,<|en|>hi a ju,temp_vad_recording_1763624292.wav,识别成功
+
+
+2025-11-20 15:38:43,True,<|en|>hi a v,temp_vad_recording_1763624322.wav,识别成功
+
+2025-11-20 15:38:49,True,<|en|>hiri,temp_vad_recording_1763624329.wav,识别成功
+2025-11-20 15:38:52,True,<|en|>hi ag v,temp_vad_recording_1763624332.wav,识别成功
+2025-11-20 15:38:56,True,<|en|>hi a v,temp_vad_recording_1763624336.wav,识别成功
+
+2025-11-20 15:39:01,True,<|en|>hi a,temp_vad_recording_1763624341.wav,识别成功
+
+
+2025-11-20 15:39:15,True,<|en|>hi hv,temp_vad_recording_1763624355.wav,识别成功
+2025-11-20 15:39:18,True,hi h g v,temp_vad_recording_1763624358.wav,识别成功
+
+2025-11-20 15:39:26,True,<|en|>hi a ju,temp_vad_recording_1763624366.wav,识别成功
+
+2025-11-20 15:39:32,True,<|en|>hi a,temp_vad_recording_1763624372.wav,识别成功
+
+2025-11-20 15:39:41,True,<|en|>hi aju v,temp_vad_recording_1763624380.wav,识别成功
+2025-11-20 15:39:45,True,<|en|>hi aju,temp_vad_recording_1763624385.wav,识别成功
+2025-11-20 15:39:49,True,<|en|>hi a g v,temp_vad_recording_1763624389.wav,识别成功
+2025-11-20 15:39:54,True,<|en|>hi a g v,temp_vad_recording_1763624394.wav,识别成功
+2025-11-20 15:39:59,True,<|en|>hi a v,temp_vad_recording_1763624398.wav,识别成功
+2025-11-20 15:40:03,True,<|en|>hi aju v,temp_vad_recording_1763624403.wav,识别成功
+2025-11-20 15:40:11,True,<|en|>hi a g v,temp_vad_recording_1763624411.wav,识别成功
+2025-11-20 16:48:31,True,hi a g v,temp_vad_recording_1763628511.wav,识别成功
+2025-11-20 16:48:34,True,a g v,temp_vad_recording_1763628514.wav,识别成功
+2025-11-20 16:48:45,True,a就 v,temp_vad_recording_1763628525.wav,识别成功
+2025-11-20 16:48:53,True,就 a,temp_vad_recording_1763628533.wav,识别成功
+2025-11-20 16:49:01,True,欢 t v,temp_vad_recording_1763628540.wav,识别成功
+2025-11-20 16:49:07,True,爱 a g v,temp_vad_recording_1763628547.wav,识别成功
+2025-11-20 16:49:16,True,秋薇,temp_vad_recording_1763628555.wav,识别成功
+2025-11-20 16:49:25,True,爱 a g v,temp_vad_recording_1763628564.wav,识别成功
+2025-11-20 16:49:35,True,周威,temp_vad_recording_1763628575.wav,识别成功
+2025-11-20 16:49:44,True,<|yue|>系几位,temp_vad_recording_1763628583.wav,识别成功
+2025-11-20 16:49:50,True,开机杯,temp_vad_recording_1763628590.wav,识别成功
+2025-11-20 16:49:55,True,<|en|><|SURPRISED|>o,temp_vad_recording_1763628594.wav,识别成功
+2025-11-20 16:49:56,True,<|HAPPY|>改好了改好了,temp_vad_recording_1763628596.wav,识别成功
+2025-11-20 16:49:58,True,发的那个,temp_vad_recording_1763628598.wav,识别成功
+2025-11-21 01:14:35,True,派 a 七 v,temp_vad_recording_1763658875.wav,识别成功
+2025-11-21 01:14:45,True,你好你好你好你好关闭对话你好,temp_vad_recording_1763658885.wav,识别成功
+2025-11-21 01:14:50,True,语音对话结束,temp_vad_recording_1763658890.wav,识别成功
+2025-11-21 01:14:51,True,请重新唤醒我,temp_vad_recording_1763658891.wav,识别成功
+2025-11-21 01:14:55,True,你好你好你好你好结束对话你好,temp_vad_recording_1763658895.wav,识别成功
+2025-11-21 01:15:02,True,你好你好你好你好结束对话你好,temp_vad_recording_1763658902.wav,识别成功
+2025-11-21 01:15:12,True,<|en|>oh,temp_vad_recording_1763658912.wav,识别成功
+2025-11-21 01:15:41,True,hi a g v,temp_vad_recording_1763658940.wav,识别成功
+2025-11-21 01:15:45,True,你好你好你好你好结束对话你好,temp_vad_recording_1763658945.wav,识别成功
+2025-11-21 01:15:51,True,语音对话结束,temp_vad_recording_1763658951.wav,识别成功
+2025-11-21 01:15:51,True,请重新唤醒我,temp_vad_recording_1763658951.wav,识别成功
+2025-11-21 01:15:53,True,嗨 h v,temp_vad_recording_1763658953.wav,识别成功
+2025-11-21 01:15:58,True,你好你好你好你好退出对话你好,temp_vad_recording_1763658958.wav,识别成功
+2025-11-21 01:16:03,True,语音对话结束,temp_vad_recording_1763658963.wav,识别成功
+2025-11-21 01:16:04,True,请重新唤醒我,temp_vad_recording_1763658963.wav,识别成功
+2025-11-21 01:16:06,True,<|en|>hi a g v,temp_vad_recording_1763658966.wav,识别成功
+2025-11-21 01:16:09,True,退出对话,temp_vad_recording_1763658969.wav,识别成功
+2025-11-21 01:16:14,True,语音对话结束,temp_vad_recording_1763658974.wav,识别成功
+2025-11-21 01:16:15,True,请重新唤醒我,temp_vad_recording_1763658975.wav,识别成功
+2025-11-21 01:16:19,True,嗨 a t v,temp_vad_recording_1763658979.wav,识别成功
+2025-11-21 01:16:22,True,结束对话,temp_vad_recording_1763658982.wav,识别成功
+2025-11-21 01:16:28,True,语音对话结束,temp_vad_recording_1763658988.wav,识别成功
+2025-11-21 01:16:28,True,请重新唤醒我,temp_vad_recording_1763658988.wav,识别成功
+2025-11-21 01:16:29,True,hi a g v,temp_vad_recording_1763658989.wav,识别成功
+2025-11-21 01:16:33,True,关闭绘画,temp_vad_recording_1763658992.wav,识别成功
+2025-11-21 01:16:43,True,hi a g v,temp_vad_recording_1763659003.wav,识别成功
+2025-11-21 01:16:46,True,关闭绘画,temp_vad_recording_1763659005.wav,识别成功
+2025-11-21 01:16:56,True,<|yue|>还 a g v,temp_vad_recording_1763659016.wav,识别成功
+2025-11-21 01:16:58,True,结束绘画,temp_vad_recording_1763659018.wav,识别成功
+2025-11-21 01:17:24,True,<|yue|>hi志 v,temp_vad_recording_1763659044.wav,识别成功
+2025-11-21 01:17:27,True,关闭对话,temp_vad_recording_1763659047.wav,识别成功
+2025-11-21 01:17:33,True,语音对话结束,temp_vad_recording_1763659053.wav,识别成功
+2025-11-21 01:17:33,True,请重新唤醒我,temp_vad_recording_1763659053.wav,识别成功
+2025-11-21 01:17:35,True,开 g v,temp_vad_recording_1763659055.wav,识别成功
+2025-11-21 01:17:38,True,结束对话,temp_vad_recording_1763659058.wav,识别成功
+2025-11-21 01:17:44,True,语音对话结束,temp_vad_recording_1763659063.wav,识别成功
+2025-11-21 01:17:44,True,请重新唤醒我,temp_vad_recording_1763659064.wav,识别成功
+2025-11-21 01:17:45,True,<|en|>hi a g v,temp_vad_recording_1763659065.wav,识别成功
+2025-11-21 01:17:48,True,退出对话,temp_vad_recording_1763659068.wav,识别成功
+2025-11-21 01:17:54,True,语音对话结束,temp_vad_recording_1763659074.wav,识别成功
+2025-11-21 01:17:54,True,请重新唤醒我,temp_vad_recording_1763659074.wav,识别成功
+2025-11-21 01:17:56,True,<|en|>hi a g v,temp_vad_recording_1763659076.wav,识别成功
+2025-11-21 01:18:01,True,你好你好你好你好退出对话你好,temp_vad_recording_1763659081.wav,识别成功
+2025-11-21 01:18:06,True,语音对话结束,temp_vad_recording_1763659086.wav,识别成功
+2025-11-21 01:18:06,True,请重新唤醒我,temp_vad_recording_1763659086.wav,识别成功
+2025-11-21 01:18:09,True,嗨几 v,temp_vad_recording_1763659088.wav,识别成功
+2025-11-21 01:18:14,True,你好你好你好你好结束会结束对话你好,temp_vad_recording_1763659094.wav,识别成功
+2025-11-21 01:18:19,True,语音对话结束,temp_vad_recording_1763659099.wav,识别成功
+2025-11-21 01:18:20,True,请重新唤醒我,temp_vad_recording_1763659100.wav,识别成功
+2025-11-21 01:18:22,True,还有 a g v,temp_vad_recording_1763659102.wav,识别成功
+2025-11-21 01:18:49,True,嗨 a g v,temp_vad_recording_1763659129.wav,识别成功
+2025-11-21 01:18:54,True,<|SAD|>你好你好你好你好,temp_vad_recording_1763659134.wav,识别成功
+2025-11-21 01:18:56,True,退出,temp_vad_recording_1763659136.wav,识别成功
+2025-11-21 01:19:20,True,嗨 h t v,temp_vad_recording_1763659160.wav,识别成功
+2025-11-21 01:19:25,True,你好你好你好你好退出对花你好,temp_vad_recording_1763659165.wav,识别成功
+2025-11-21 01:19:52,True,<|en|>hi a g v,temp_vad_recording_1763659191.wav,识别成功
+2025-11-21 01:19:56,True,你好你好你好你好退出对话你好,temp_vad_recording_1763659196.wav,识别成功
+2025-11-21 01:20:02,True,语音对话结束,temp_vad_recording_1763659202.wav,识别成功
+2025-11-21 01:20:02,True,请重新唤醒我,temp_vad_recording_1763659202.wav,识别成功
+2025-11-21 01:21:10,True,<|yue|>诶 a g v,temp_vad_recording_1763659270.wav,识别成功
+2025-11-21 01:21:14,True,嗨有 a t v,temp_vad_recording_1763659274.wav,识别成功
+2025-11-21 01:22:17,True,派 a t v,temp_vad_recording_1763659337.wav,识别成功
+2025-11-21 01:22:22,True,你好你好你好你好关闭绘画你好,temp_vad_recording_1763659342.wav,识别成功
+2025-11-21 01:23:01,True,hi a g v,temp_vad_recording_1763659381.wav,识别成功
+2025-11-21 01:23:03,True,你好,temp_vad_recording_1763659383.wav,识别成功
+2025-11-21 01:23:05,True,巴拉巴拉巴拉巴拉,temp_vad_recording_1763659385.wav,识别成功
+2025-11-21 01:23:07,True,关闭汇换稍等,temp_vad_recording_1763659387.wav,识别成功
+2025-11-21 01:23:09,True,不好意思,temp_vad_recording_1763659389.wav,识别成功
+2025-11-21 01:23:13,True,学习,temp_vad_recording_1763659392.wav,识别成功
+2025-11-21 01:23:15,True,hi a g v,temp_vad_recording_1763659395.wav,识别成功
+2025-11-21 01:23:19,True,巴拉巴拉巴拉巴拉关闭绘画你好,temp_vad_recording_1763659399.wav,识别成功
+2025-11-21 01:23:25,True,语音对话结束,temp_vad_recording_1763659405.wav,识别成功
+2025-11-21 01:23:25,True,请重新唤醒我,temp_vad_recording_1763659405.wav,识别成功
+2025-11-21 01:23:27,True,<|en|>hi a g v,temp_vad_recording_1763659406.wav,识别成功
+2025-11-21 01:23:31,True,巴拉巴拉巴拉巴拉退出绘画你好,temp_vad_recording_1763659411.wav,识别成功
+2025-11-21 01:23:37,True,语音对话结束,temp_vad_recording_1763659416.wav,识别成功
+2025-11-21 01:23:37,True,请重新唤醒我,temp_vad_recording_1763659417.wav,识别成功
+2025-11-21 01:23:38,True,hi a g v,temp_vad_recording_1763659418.wav,识别成功
+2025-11-21 01:23:42,True,巴拉巴拉巴拉巴拉结束绘画你好,temp_vad_recording_1763659422.wav,识别成功
+2025-11-21 01:23:48,True,语音对话结束,temp_vad_recording_1763659427.wav,识别成功
+2025-11-21 01:23:48,True,请重新唤醒我,temp_vad_recording_1763659428.wav,识别成功
+2025-11-21 01:23:50,True,hi a g v,temp_vad_recording_1763659430.wav,识别成功
+2025-11-21 01:23:54,True,巴拉巴拉巴拉巴拉关闭对话你好,temp_vad_recording_1763659434.wav,识别成功
+2025-11-21 01:23:59,True,语音对话结束,temp_vad_recording_1763659439.wav,识别成功
+2025-11-21 01:24:00,True,请重新唤醒我,temp_vad_recording_1763659440.wav,识别成功
+2025-11-21 01:24:02,True,hi a g v,temp_vad_recording_1763659442.wav,识别成功
+2025-11-21 01:24:06,True,巴拉巴拉巴拉巴拉退出对话你好,temp_vad_recording_1763659446.wav,识别成功
+2025-11-21 01:24:11,True,语音对话结束,temp_vad_recording_1763659451.wav,识别成功
+2025-11-21 01:24:12,True,请重新唤醒我,temp_vad_recording_1763659451.wav,识别成功
+2025-11-21 01:24:14,True,hi a g v,temp_vad_recording_1763659454.wav,识别成功
+2025-11-21 01:24:18,True,巴拉巴拉巴拉巴拉结束兑换你好,temp_vad_recording_1763659458.wav,识别成功
+2025-11-21 01:24:20,True,您稍等,temp_vad_recording_1763659460.wav,识别成功
+2025-11-21 01:24:33,True,<|ja|>一旦ち,temp_vad_recording_1763659473.wav,识别成功
+2025-11-21 01:24:35,True,电压为二十六,temp_vad_recording_1763659474.wav,识别成功
+2025-11-21 01:24:38,True,<|ja|>二十一ご的し,temp_vad_recording_1763659477.wav,识别成功
+2025-11-21 01:24:40,True,<|ja|>ほいい,temp_vad_recording_1763659480.wav,识别成功
+2025-11-21 01:24:43,True,的 i g v 电池温度为三十二安培,temp_vad_recording_1763659483.wav,识别成功
+2025-11-21 01:24:47,True,车辆别,temp_vad_recording_1763659487.wav,识别成功
+2025-11-21 01:24:48,True,号位一,temp_vad_recording_1763659488.wav,识别成功
+2025-11-21 01:24:49,True,来奇位店,temp_vad_recording_1763659489.wav,识别成功
+2025-11-21 01:24:51,True,温度为三十二摄氏,temp_vad_recording_1763659491.wav,识别成功
+2025-11-21 01:24:55,True,车辆编号为,temp_vad_recording_1763659495.wav,识别成功
+2025-11-21 01:24:58,True,极位电池温度为三十二,temp_vad_recording_1763659498.wav,识别成功
+2025-11-21 01:25:00,True,其为电池,temp_vad_recording_1763659500.wav,识别成功
+2025-11-21 01:25:01,True,百分之,temp_vad_recording_1763659501.wav,识别成功
+2025-11-21 01:25:03,True,任务完成,temp_vad_recording_1763659503.wav,识别成功
+2025-11-21 01:25:05,True,我没了解到,temp_vad_recording_1763659505.wav,识别成功
+2025-11-21 01:25:07,True,为百分,temp_vad_recording_1763659507.wav,识别成功
+2025-11-21 01:25:08,True,六点五二,temp_vad_recording_1763659508.wav,识别成功
+2025-11-21 01:25:21,True,hi a t v,temp_vad_recording_1763659521.wav,识别成功
+2025-11-21 01:25:26,True,巴拉巴拉巴拉巴拉关闭绘画你好,temp_vad_recording_1763659526.wav,识别成功
+2025-11-21 01:25:31,True,语音对话结束,temp_vad_recording_1763659531.wav,识别成功
+2025-11-21 01:25:32,True,请重新唤醒我,temp_vad_recording_1763659532.wav,识别成功
+2025-11-21 01:25:33,True,嗨 a g v,temp_vad_recording_1763659533.wav,识别成功
+2025-11-21 01:25:37,True,巴拉巴拉巴拉巴拉关闭对话你好,temp_vad_recording_1763659537.wav,识别成功
+2025-11-21 01:25:43,True,语音对话结束,temp_vad_recording_1763659543.wav,识别成功
+2025-11-21 01:25:43,True,请重新唤醒我,temp_vad_recording_1763659543.wav,识别成功
+2025-11-21 01:25:44,True,嗨 a g v,temp_vad_recording_1763659544.wav,识别成功
+2025-11-21 01:25:48,True,巴拉巴拉巴拉巴拉退出对话你好,temp_vad_recording_1763659548.wav,识别成功
+2025-11-21 01:25:53,True,语音对话结束,temp_vad_recording_1763659553.wav,识别成功
+2025-11-21 01:25:54,True,请重新唤醒我,temp_vad_recording_1763659553.wav,识别成功
+2025-11-21 01:25:55,True,嗨 a g v,temp_vad_recording_1763659555.wav,识别成功
+2025-11-21 01:25:59,True,巴拉巴拉巴拉巴拉结束对话你好,temp_vad_recording_1763659559.wav,识别成功
+2025-11-21 01:55:37,True,hi a g v,temp_vad_recording_1763661336.wav,识别成功
+2025-11-21 01:55:43,True,关闭对话,temp_vad_recording_1763661342.wav,识别成功
+2025-11-21 01:55:48,True,语音对话结束,temp_vad_recording_1763661348.wav,识别成功
+2025-11-21 01:55:48,True,请重新唤醒我,temp_vad_recording_1763661348.wav,识别成功
+2025-11-21 01:55:54,True,hi a t v,temp_vad_recording_1763661354.wav,识别成功
+2025-11-21 01:56:17,True,语音对话结束,temp_vad_recording_1763661376.wav,识别成功
+2025-11-21 01:56:17,True,你好你好你好你好你好你好你好你好你好,temp_vad_recording_1763661377.wav,识别成功
+2025-11-21 01:56:21,True,你好你好你好你好,temp_vad_recording_1763661381.wav,识别成功
+2025-11-21 01:56:24,True,<|en|>hi a g v,temp_vad_recording_1763661383.wav,识别成功
+2025-11-21 01:56:48,True,你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好你好,temp_vad_recording_1763661408.wav,识别成功
+2025-11-21 01:56:51,True,<|en|>f,temp_vad_recording_1763661411.wav,识别成功
+2025-11-21 01:57:21,True,hi a t v,temp_vad_recording_1763661441.wav,识别成功
+2025-11-21 01:57:24,True,结束对话,temp_vad_recording_1763661444.wav,识别成功
+2025-11-21 01:57:30,True,语音对话你好你好你好你好你好你好你好你好你好你好你好你好你好,temp_vad_recording_1763661450.wav,识别成功

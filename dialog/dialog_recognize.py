@@ -1,4 +1,5 @@
 # Copyright 2025 Standard Robots Co. All rights reserved.
+from this import d
 import log_config
 from enum import Enum
 import sounddevice as sd
@@ -17,6 +18,8 @@ from pathlib import Path
 import sys
 import subprocess
 import tempfile
+import csv
+import datetime
 
 # 添加项目根目录到Python路径
 project_root = Path(__file__).parent.parent
@@ -160,6 +163,19 @@ def get_para_value(key: str):
         _logger.error(f"get_para_value error: {e}")
         return None
 
+def save_result_to_csv(result: dict, csv_file_path: str = "asr_results.csv"):
+    """保存result到CSV文件"""
+    try:
+        file_exists = os.path.exists(csv_file_path)
+        row = {"时间戳": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), **result}
+        with open(csv_file_path, 'a', newline='', encoding='utf-8-sig') as f:
+            writer = csv.DictWriter(f, fieldnames=row.keys())
+            if not file_exists:
+                writer.writeheader()
+            writer.writerow(row)
+    except Exception as e:
+        _logger.error(f"保存CSV失败: {e}")
+
 
 def get_text_from_server(audio_file_path, hot_words="", server_url="http://172.17.0.2:5000/recognize"):
     """
@@ -219,6 +235,7 @@ def get_text_from_server(audio_file_path, hot_words="", server_url="http://172.1
         if response.status_code == 200:
             result = response.json()
             _logger.info(f"服务器响应: {result}")
+            save_result_to_csv(result)
             return result
         else:
             error_msg = f"服务器返回错误状态码: {response.status_code}"
@@ -1004,16 +1021,16 @@ class AudioStreamReader:
                             continue
 
                         # 创建VAD检测器
-                        vad = VoiceActivityDetector(
-                            sample_rate=self.sample_rate,
-                            energy_threshold=self.min_speech_energy,
-                            silence_duration_ms=self.silence_duration_ms,
-                            min_speech_duration_ms=150,
-                            speech_detection_threshold_ms=100
-                        )
-                        energy = vad.calculate_frame_energy(chunk)
-                        _logger.info(
-                            f"🔊 当前帧能量: {energy}", f"🔊 当前帧能量阈值: {vad.energy_threshold}")
+                        # vad = VoiceActivityDetector(
+                        #     sample_rate=self.sample_rate,
+                        #     energy_threshold=self.min_speech_energy,
+                        #     silence_duration_ms=self.silence_duration_ms,
+                        #     min_speech_duration_ms=150,
+                        #     speech_detection_threshold_ms=100
+                        # )
+                        # energy = vad.calculate_frame_energy(chunk)
+                        # _logger.info(
+                        #     f"🔊 当前帧能量: {energy}", f"🔊 当前帧能量阈值: {vad.energy_threshold}")
                         # 将chunk存入VAD队列
                         with self.vad_queue_lock:
                             self.vad_queue.append(chunk.copy())
@@ -1058,14 +1075,14 @@ class AudioStreamReader:
                         try:
                             # 读取音频chunk
                             chunk, overflowed = stream.read(chunk_size)
-                            vad = VoiceActivityDetector(
-                                sample_rate=self.sample_rate,
-                                energy_threshold=self.min_speech_energy,  # 降低阈值，更敏感
-                                silence_duration_ms=self.silence_duration_ms,  # 降低静音检测阈值
-                                min_speech_duration_ms=150,  # 减少最小语音时长
-                                speech_detection_threshold_ms=100  # 减少检测阈值，更快检测
-                            )
-                            energy = vad.calculate_frame_energy(chunk)
+                            # vad = VoiceActivityDetector(
+                            #     sample_rate=self.sample_rate,
+                            #     energy_threshold=self.min_speech_energy,  # 降低阈值，更敏感
+                            #     silence_duration_ms=self.silence_duration_ms,  # 降低静音检测阈值
+                            #     min_speech_duration_ms=150,  # 减少最小语音时长
+                            #     speech_detection_threshold_ms=100  # 减少检测阈值，更快检测
+                            # )
+                            # energy = vad.calculate_frame_energy(chunk)
                             # _logger.info(f"🔊 当前帧能量: {energy}", f"🔊 当前帧能量阈值: {vad.energy_threshold}")
 
                             if overflowed:
@@ -1112,7 +1129,7 @@ class AudioStreamReader:
         # 条件2：对话播放状态检查
         conversation_playing_status = self.get_conversation_playing_status()
         is_not_playing = conversation_playing_status.get('is_playing_now', True) == False
-        duration_enough = audio_data.vad_duration > 10
+        duration_enough = audio_data.vad_duration > 17
         condition2 = is_not_playing and duration_enough
         
         # 所有条件都必须满足
@@ -1195,11 +1212,28 @@ class AudioStreamReader:
             self.stream_active = False
 
     def handle_recognized_text(self, recognized_text: str, audio_data: AudioData):
-        if self.is_static_enough(audio_data):
+        if self._is_stop_conversation_word(recognized_text):
+            # 检测到停止对话词 - 优先级高于唤醒词
+            if self.is_in_conversation():
+                # 根据对话类型播放不同的提示
+                if self.conversation_state == ConversationState.IN_WAKEUP_CONVERSATION:
+                    self._synthesize_and_play_text("语音对话结束. 请重新唤醒我")
+                    conversation_playing_status = self.get_conversation_playing_status()
+                    while conversation_playing_status['is_playing_now'] == True:
+                        time.sleep(0.1)
+                        conversation_playing_status = self.get_conversation_playing_status()
+                    self.end_conversation()
+                _logger.info("✅ 已通过停止对话词结束对话")
+                return
+        elif self.is_static_enough(audio_data):
             _logger.info(f"🔍 检测到静音超时")
             # 静音超时，只对语音唤醒对话结束
             if self.conversation_state == ConversationState.IN_WAKEUP_CONVERSATION:
                 self._synthesize_and_play_text("语音对话结束. 请重新唤醒我")
+                conversation_playing_status = self.get_conversation_playing_status()
+                while conversation_playing_status['is_playing_now'] == True:
+                    time.sleep(0.1)
+                    conversation_playing_status = self.get_conversation_playing_status()
                 self.end_conversation()
                 return
             elif self.conversation_state == ConversationState.IN_BUTTON_CONVERSATION:
@@ -1228,7 +1262,6 @@ class AudioStreamReader:
 
             # 检查是否在播放语音期间
             conversation_playing_status = self.get_conversation_playing_status()
-            _logger.info(f"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!🔊 对话播放状态: {conversation_playing_status}")
             if conversation_playing_status['is_playing_now']:
                 _logger.warning(
                     f"❌ 识别为播放语音，不进行播放,{self.future_play_end_time - audio_data.vad_start_time},{audio_data.vad_duration}")
@@ -1492,7 +1525,7 @@ class AudioStreamReader:
                 _logger.info(f"✅ 服务器响应成功: {response_data}")
                 
                 # 保存用户请求和AI回复作为证据（请求-回复对）
-                self._save_ai_response_text(text, ai_reply)
+                self._save_ai_response_text(text, ai_reply, response_data)
                 
                 return ai_reply
             else:
@@ -1511,78 +1544,57 @@ class AudioStreamReader:
             _logger.error(f"❌ 未知错误: {e}")
             return "未知错误"
 
-    def _save_ai_response_text(self, user_request: str, ai_response: str):
+    def _save_ai_response_text(self, user_request: str, ai_response: str, response_data: str):
         """
-        保存用户请求和AI回复文本到本地文件作为证据
+        保存用户请求和AI回复文本到CSV文件作为证据
         
         功能：
-        1. 每次对话创建一个独立文件，包含请求和回复
-        2. 最多保留100个文件，超出时删除最旧的文件
-        3. 文件名包含时间戳和序号
+        1. 将所有对话按顺序保存到单个CSV文件中
+        2. CSV文件最大支持900MB，超过后删除重新开始
+        3. CSV包含：时间、用户请求、AI回复、response_data
         
         参数：
             user_request: 用户的请求文本
-            ai_response: AI的回复文本
+            ai_response: AI的回复文本（经过文本处理后的最终结果）
+            response_data: 原始服务器响应数据
         """
         try:
-            import os
-            from pathlib import Path
-            import datetime
-            
             # 创建保存目录
             save_dir = Path(__file__).parent.parent / "ai_responses"
             save_dir.mkdir(exist_ok=True)
             
-            # 生成文件名：时间戳_序号.txt
-            timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-            milliseconds = int(datetime.datetime.now().microsecond / 1000)
-            filename = f"ai_response_{timestamp}_{milliseconds:03d}.txt"
-            filepath = save_dir / filename
+            # CSV文件名
+            csv_filename = "ai_response.csv"
+            csv_filepath = save_dir / csv_filename
             
-            # 保存文本内容（请求-回复对）
-            with open(filepath, 'w', encoding='utf-8') as f:
-                f.write(f"时间: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
-                f.write(f"\n")
-                f.write(f"用户请求:\n")
-                f.write(f"{'='*50}\n")
-                f.write(user_request)
-                f.write(f"\n{'='*50}\n")
-                f.write(f"\n")
-                f.write(f"AI回复:\n")
-                f.write(f"{'='*50}\n")
-                f.write(ai_response)
-                f.write(f"\n{'='*50}\n")
+            # 检查文件大小，超过900MB则删除重新开始
+            max_size_bytes = 900 * 1024 * 1024  # 900MB
+            file_exists = csv_filepath.exists()
+            if file_exists:
+                file_size = os.path.getsize(csv_filepath)
+                if file_size >= max_size_bytes:
+                    csv_filepath.unlink()
+                    file_exists = False  # 文件已被删除
+                    _logger.info(f"🗑️ CSV文件超过900MB，已删除并重新开始: {csv_filepath.name}")
             
-            _logger.info(f"💾 对话记录已保存: {filename}")
+            # 准备数据
+            timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
             
-            # 管理文件数量，保持最多100个文件
-            self._manage_ai_response_files(save_dir, max_files=100)
+            # 写入CSV文件（追加模式）
+            with open(csv_filepath, 'a', newline='', encoding='utf-8') as f:
+                writer = csv.writer(f)
+                
+                # 如果文件不存在，写入表头
+                if not file_exists:
+                    writer.writerow(['时间', '用户请求', 'AI回复', 'response_data'])
+                
+                # 写入数据行
+                writer.writerow([timestamp, user_request, ai_response, response_data])
+            
+            _logger.info(f"💾 对话记录已保存到CSV: {csv_filename}")
             
         except Exception as e:
             _logger.error(f"❌ 保存对话记录失败: {e}")
-
-    def _manage_ai_response_files(self, save_dir: Path, max_files: int = 100):
-        """
-        管理AI回复文件数量，删除超出限制的最旧文件
-        """
-        try:
-            # 获取所有AI回复文件
-            files = list(save_dir.glob("ai_response_*.txt"))
-            
-            if len(files) > max_files:
-                # 按修改时间排序，最旧的在前
-                files.sort(key=lambda x: x.stat().st_mtime)
-                
-                # 删除超出限制的最旧文件
-                files_to_delete = files[:-max_files]
-                for file_to_delete in files_to_delete:
-                    file_to_delete.unlink()
-                    _logger.info(f"🗑️ 已删除旧的AI回复文件: {file_to_delete.name}")
-                
-                _logger.info(f"📁 AI回复文件管理完成，保留最新的{max_files}个文件")
-                
-        except Exception as e:
-            _logger.error(f"❌ 管理AI回复文件失败: {e}")
 
     def save_audio_to_temp_file(self, audio_data: np.ndarray):
         import numpy as np
@@ -1660,7 +1672,8 @@ class AudioStreamReader:
             min_speech_energy = self.min_speech_energy
             if self.conversation_state == ConversationState.WAIT_FOR_WAKEUP:
                 min_speech_energy = self.min_speech_energy*0.8
-
+            if self.conversation_state == ConversationState.IN_WAKEUP_CONVERSATION:
+                min_speech_energy = self.min_speech_energy*4.0
             if self.conversation_state == ConversationState.WAIT_FOR_WAKEUP:
                 self.silence_duration_ms = 300
             # 初始化VAD检测器 - 使用更敏感的参数
@@ -1921,7 +1934,59 @@ class AudioStreamReader:
         
         _logger.info(f"🎯 未检测到唤醒词")
         return False
-
+    
+    def _is_stop_conversation_word(self, recognized_text: str) -> bool:
+        """
+        检查识别文本是否包含停止对话词（配置驱动）
+        
+        从 config/rules/stop_conversation_words.csv 读取停止对话词配置
+        支持精确匹配和模糊匹配
+        
+        参数:
+            recognized_text: 识别的文本
+        
+        返回:
+            bool: 是否检测到停止对话词
+        """
+        # 边界检查：空文本直接返回False
+        if not recognized_text or not recognized_text.strip():
+            return False
+        
+        try:
+            # 从配置加载器获取停止对话词
+            stop_conversation_words_data = self.config_loader.get_enabled_items('stop_conversation_words')
+            
+            if not stop_conversation_words_data:
+                _logger.debug("⚠️ 停止对话词配置为空")
+                return False
+            
+            # 分类停止对话词
+            exact_words = [w['stop_conversation_word'] for w in stop_conversation_words_data 
+                          if w.get('word_type') == 'exact' and w.get('stop_conversation_word')]
+            fuzzy_words = [w['stop_conversation_word'] for w in stop_conversation_words_data 
+                          if w.get('word_type') == 'fuzzy' and w.get('stop_conversation_word')]
+            
+            # 检查精确匹配
+            if exact_words:
+                matched_exact = [word for word in exact_words if word in recognized_text]
+                if matched_exact:
+                    matched_word = matched_exact[0]  # 取第一个匹配的词
+                    _logger.info(f"🔍 精确匹配检测到停止对话词: '{matched_word}'")
+                    return True
+            
+            # 检查模糊匹配
+            if fuzzy_words:
+                for word in fuzzy_words:
+                    if word in recognized_text:
+                        _logger.info(f"🔍 模糊匹配检测到停止对话词: '{word}'")
+                        return True
+            
+            return False
+        
+        except Exception as e:
+            _logger.error(f"❌ 检测停止对话词时出错: {e}")
+            return False
+    
     def _get_response_duration(self, response) -> float:
         """
         安全地从响应中获取duration值
@@ -2125,6 +2190,7 @@ class AudioStreamReader:
                 if not self.start_button_conversation():
                     _logger.error("❌ 启动按钮对话失败")
                     return False
+                    
             # 发送到AI服务器获取回复
             ai_response = self._request_server(self.dialog_ai_url, text)
             response = self._synthesize_and_play_text(ai_response)

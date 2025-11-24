@@ -79,6 +79,9 @@ class ConfigLoader:
             # 唤醒词模块
             wake_words = loader.get_config('wake_words')
             
+            # 停止对话词模块
+            stop_conversation_words = loader.get_config('stop_conversation_words')
+            
             # 缩写词模块
             abbreviations = loader.get_config('abbreviations')
         """
@@ -157,11 +160,21 @@ class ConfigLoader:
         获取已启用的配置项
         
         参数:
-            config_name: 配置文件名
+            config_name: 配置文件名（不含.csv）
             filter_field: 过滤字段名（默认为'enabled'）
         
         返回:
             List[Dict]: 已启用的配置项列表
+        
+        示例:
+            # 获取启用的唤醒词
+            wake_words = loader.get_enabled_items('wake_words')
+            
+            # 获取启用的停止对话词
+            stop_words = loader.get_enabled_items('stop_conversation_words')
+            
+            # 获取启用的缩写词
+            abbreviations = loader.get_enabled_items('abbreviations')
         """
         all_items = self.get_config(config_name)
         return [item for item in all_items if item.get(filter_field, '').upper() in ['TRUE', '1', 'YES']]

@@ -1,0 +1,13 @@
+word_id,stop_conversation_word,word_type,priority,enabled,description
+1,关闭对话,exact,1,TRUE,停止对话词-关闭对话
+2,退出对话,exact,1,TRUE,停止对话词-退出对话
+3,结束对话,exact,1,TRUE,停止对话词-结束对话
+4,关闭会话,exact,1,TRUE,停止对话词-关闭会话
+5,退出会话,exact,1,TRUE,停止对话词-退出会话
+6,结束会话,exact,1,TRUE,停止对话词-结束会话
+7,关闭绘画,exact,1,TRUE,停止对话词-关闭绘画
+8,退出绘画,exact,1,TRUE,停止对话词-退出绘画
+9,结束绘画,exact,1,TRUE,停止对话词-结束绘画
+10,关闭兑换,exact,1,TRUE,停止对话词-关闭兑换
+11,退出兑换,exact,1,TRUE,停止对话词-退出兑换
+12,结束兑换,exact,1,TRUE,停止对话词-结束兑换

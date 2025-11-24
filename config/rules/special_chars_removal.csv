@@ -12,4 +12,5 @@ char_id,character,enabled,description
 11,},TRUE,右花括号
 12,|,TRUE,竖线
 13,\,TRUE,反斜杠
-
+14,【,TRUE,左中文方括号
+15,】,TRUE,右中文方括号
