@@ -20,7 +20,18 @@ sys.path.insert(0, str(project_root))
 import log_config
 
 # 导入 Modbus 配置
-from .config import MODBUS_HOST, MODBUS_PORT
+try:
+    from .config import MODBUS_HOST, MODBUS_PORT
+except ImportError:
+    # 如果作为独立模块运行（直接导入），需要从当前目录导入
+    import importlib.util
+    import os
+    config_path = os.path.join(os.path.dirname(__file__), 'config.py')
+    spec = importlib.util.spec_from_file_location("agent_config", config_path)
+    config_module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(config_module)
+    MODBUS_HOST = config_module.MODBUS_HOST
+    MODBUS_PORT = config_module.MODBUS_PORT
 
 # 获取日志记录器（使用统一的日志系统）
 logger = logging.getLogger(__name__)
@@ -86,17 +97,15 @@ class ModbusAICmd:
     
     def get_battery_info(self) -> str:
         """获取电池电量"""
-        from sr_modbus_sdk_py.src.sr_modbus_model import BatteryInfo
-        # battery_percent = self.mb_server.get_battery_info()
-        battery_percent = BatteryInfo()
-        battery_percent.percentage_electricity = 50
-        battery_percent.temperature = 30
-        battery_percent.nominal_capacity = 18650
+        # 直接使用已连接的 mb_server 获取电池信息
+        # SDK 路径已在 __init__ 中设置，mb_server 已经可以正常工作
+        battery_percent = self.mb_server.get_battery_info()
+        
         return json.dumps({
             "battery_info": {
                 "percentage_electricity": battery_percent.percentage_electricity,
                 "temperature": battery_percent.temperature,
-                "state": battery_percent.state,
+                "state": str(battery_percent.state),
                 "voltage": battery_percent.voltage,
                 "current": battery_percent.current,
                 "nominal_capacity": battery_percent.nominal_capacity

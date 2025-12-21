@@ -1240,21 +1240,70 @@ class AudioStreamReader:
                 # 按钮对话不会因为超时而结束，需要手动结束
                 _logger.info("🔘 按钮对话模式：静音超时，但不会自动结束对话")
                 return
-        elif self._is_wake_word(recognized_text):
-            # 检测到唤醒词
+        # 检测唤醒词并提取问题
+        wake_word_info = self._extract_wake_word_and_query(recognized_text)
+        
+        if wake_word_info['has_wake_word']:
+            # 确保进入对话模式
             if self.conversation_state == ConversationState.WAIT_FOR_WAKEUP:
-                # 从等待唤醒状态开始语音唤醒对话
                 self.start_wakeup_conversation()
+            
             if self.conversation_state == ConversationState.IN_WAKEUP_CONVERSATION:
-                reply_success = self._synthesize_and_play_text(
-                    "music/nihao.wav", use_path=True)
-                if reply_success:
-                    duration = self._get_response_duration(reply_success)
-                    self.future_play_end_time = time.time() + duration
-                    _logger.info("✅ 语音唤醒成功，进入对话模式")
+                if wake_word_info['is_wake_word_only']:
+                    # 情况1：只含唤醒词，按现有逻辑处理
+                    reply_success = self._synthesize_and_play_text(
+                        "music/nihao.wav", use_path=True)
+                    if reply_success:
+                        duration = self._get_response_duration(reply_success)
+                        self.future_play_end_time = time.time() + duration
+                        _logger.info("✅ 语音唤醒成功，进入对话模式")
+                    else:
+                        _logger.error("❌ 语音唤醒回复播放失败")
+                        self.end_conversation()
                 else:
-                    _logger.error("❌ 语音唤醒回复播放失败")
-                    self.end_conversation()
+                    # 情况2：唤醒词+问题，直接处理问题
+                    query_text = wake_word_info['query_text']
+                    if query_text and query_text.strip():
+                        _logger.info(f"🎤 检测到唤醒词+问题: '{query_text}'")
+                        
+                        # 文本处理（口语数字标准化等）
+                        query_text_before = query_text
+                        query_text = self.text_processor.normalize_spoken_digits(query_text)
+                        if query_text != query_text_before:
+                            _logger.info(f"🔄 口语数字标准化: '{query_text_before}' → '{query_text}'")
+                        
+                        # 添加车辆编号
+                        query_text = self._add_vehile_num(query_text)
+                        
+                        # 播放"请稍等"提示音
+                        reply_qing_nin_shao_deng = self._synthesize_and_play_text(
+                            "music/qing_nin_shao_deng.wav", use_path=True)
+                        
+                        # 发送问题给AI
+                        ai_response = self._request_server(self.dialog_ai_url, query_text)
+                        response = self._synthesize_and_play_text(ai_response)
+                        
+                        if response:
+                            duration = self._get_response_duration(response=response)
+                            self.future_play_end_time = time.time() + duration
+                            response_data = self._get_response_data(response)
+                            _logger.info(
+                                f"🔊 回复播放完成，回复内容: {response_data}, 时长: {duration:.2f}")
+                        else:
+                            self.future_play_end_time = 0
+                            _logger.error("❌ 回复播放失败")
+                    else:
+                        # 提取的问题为空，降级为只含唤醒词的处理
+                        _logger.warning("⚠️ 提取的问题为空，按只含唤醒词处理")
+                        reply_success = self._synthesize_and_play_text(
+                            "music/nihao.wav", use_path=True)
+                        if reply_success:
+                            duration = self._get_response_duration(reply_success)
+                            self.future_play_end_time = time.time() + duration
+                            _logger.info("✅ 语音唤醒成功，进入对话模式")
+                        else:
+                            _logger.error("❌ 语音唤醒回复播放失败")
+                            self.end_conversation()
         elif self.is_in_conversation():
             # 在对话状态中处理用户输入
             _logger.info(
@@ -1671,7 +1720,7 @@ class AudioStreamReader:
 
             min_speech_energy = self.min_speech_energy
             if self.conversation_state == ConversationState.WAIT_FOR_WAKEUP:
-                min_speech_energy = self.min_speech_energy*0.8
+                min_speech_energy = self.min_speech_energy*4.0
             if self.conversation_state == ConversationState.IN_WAKEUP_CONVERSATION:
                 min_speech_energy = self.min_speech_energy*4.0
             if self.conversation_state == ConversationState.WAIT_FOR_WAKEUP:
@@ -1935,6 +1984,106 @@ class AudioStreamReader:
         _logger.info(f"🎯 未检测到唤醒词")
         return False
     
+    def _extract_wake_word_and_query(self, recognized_text: str) -> dict:
+        """
+        检测唤醒词并提取问题文本
+        
+        参数:
+            recognized_text: ASR识别的文本
+        
+        返回:
+            dict: {
+                'has_wake_word': bool,      # 是否包含唤醒词
+                'is_wake_word_only': bool,   # 是否只含唤醒词（无其他有意义内容）
+                'query_text': str,           # 提取的问题文本（去除唤醒词后）
+                'matched_wake_word': str     # 匹配到的唤醒词
+            }
+        """
+        result = {
+            'has_wake_word': False,
+            'is_wake_word_only': True,
+            'query_text': '',
+            'matched_wake_word': ''
+        }
+        
+        if not recognized_text or not recognized_text.strip():
+            return result
+        
+        # 从配置加载器获取唤醒词
+        wake_words_data = self.config_loader.get_enabled_items('wake_words')
+        
+        # 分类唤醒词
+        exact_words = [w['wake_word'] for w in wake_words_data if w['word_type'] == 'exact']
+        fuzzy_words = [w['wake_word'] for w in wake_words_data if w['word_type'] == 'fuzzy']
+        
+        matched_wake_word = None
+        wake_word_start = -1
+        wake_word_end = -1
+        
+        # 1. 先检查精确匹配
+        for word in exact_words:
+            if word in recognized_text:
+                matched_wake_word = word
+                wake_word_start = recognized_text.find(word)
+                wake_word_end = wake_word_start + len(word)
+                _logger.info(f"🔍 精确匹配检测到唤醒词: '{matched_wake_word}' (位置: {wake_word_start}-{wake_word_end})")
+                break
+        
+        # 2. 如果精确匹配失败，检查模糊匹配
+        if not matched_wake_word:
+            for word in fuzzy_words:
+                if word in recognized_text:
+                    matched_wake_word = word
+                    wake_word_start = recognized_text.find(word)
+                    wake_word_end = wake_word_start + len(word)
+                    _logger.info(f"🔍 模糊匹配检测到唤醒词: '{matched_wake_word}' (位置: {wake_word_start}-{wake_word_end})")
+                    break
+        
+        # 3. 如果未找到唤醒词，返回结果
+        if not matched_wake_word:
+            _logger.debug(f"🎯 未检测到唤醒词")
+            return result
+        
+        # 4. 提取问题文本（移除唤醒词）
+        result['has_wake_word'] = True
+        result['matched_wake_word'] = matched_wake_word
+        
+        # 只提取唤醒词后的文本
+        query_text = recognized_text[wake_word_end:].strip()
+        
+        # 5. 清理文本：去除常见标点和空格
+        import re
+        # 去除前后标点（如：，。！？、等）
+        query_text = re.sub(r'^[，。！？、,\.!?\s]+', '', query_text)
+        query_text = re.sub(r'[，。！？、,\.!?\s]+$', '', query_text)
+        # 去除多余空格
+        query_text = re.sub(r'\s+', ' ', query_text).strip()
+        
+        _logger.debug(f"📝 提取的问题文本: '{query_text}' (原始: '{recognized_text}')")
+        
+        # 6. 判断文本是否为空（使用新的判断方法）
+        if not query_text:
+            # 文本为空
+            result['is_wake_word_only'] = True
+            result['query_text'] = ''
+            _logger.info(f"✅ 判断结果: 只含唤醒词（提取后文本为空）")
+        else:
+            # 使用新的判断方法判断文本是否有意义
+            is_meaningful = self._is_text_meaningful(query_text)
+            
+            if is_meaningful:
+                # 文本有意义，包含问题
+                result['is_wake_word_only'] = False
+                result['query_text'] = query_text
+                _logger.info(f"✅ 判断结果: 唤醒词+问题（问题: '{query_text}'）")
+            else:
+                # 文本无意义，视为只含唤醒词
+                result['is_wake_word_only'] = True
+                result['query_text'] = ''
+                _logger.info(f"✅ 判断结果: 只含唤醒词（提取后文本无意义: '{query_text}'）")
+        
+        return result
+    
     def _is_stop_conversation_word(self, recognized_text: str) -> bool:
         """
         检查识别文本是否包含停止对话词（配置驱动）
@@ -1985,6 +2134,63 @@ class AudioStreamReader:
         
         except Exception as e:
             _logger.error(f"❌ 检测停止对话词时出错: {e}")
+            return False
+    
+    def _is_text_meaningful(self, text: str) -> bool:
+        """
+        判断文本是否包含有意义内容
+        
+        判断规则：
+        1. 纯中文：中文字符数 >= 4 才算有意义
+        2. 纯英文：英文字符数 >= 10 才算有意义
+        3. 中英文混合：只要满足中文字符 >= 4 或 英文字符 >= 10 其中一个条件，就算有意义
+        4. 如果两者都不满足，则认为文本为空（无意义）
+        
+        参数:
+            text: 待判断的文本
+        
+        返回:
+            bool: True表示文本有意义，False表示文本为空或无意义
+        """
+        if not text or not text.strip():
+            return False
+        
+        # 统计中英文字符数
+        chinese_chars = sum(1 for char in text if '\u4e00' <= char <= '\u9fff')
+        english_chars = sum(1 for char in text if char.isascii() and char.isalpha())
+        
+        # 判断文本类型
+        has_chinese = chinese_chars > 0
+        has_english = english_chars > 0
+        
+        if has_chinese and has_english:
+            # 情况3：中英文混合
+            # 只要满足其中一个条件就算有意义：中文 >= 4 或 英文 >= 10
+            is_meaningful = (chinese_chars >= 4) or (english_chars >= 10)
+            _logger.debug(
+                f"📊 混合文本判断: 中文{chinese_chars}个, 英文{english_chars}个, "
+                f"结果: {'有意义' if is_meaningful else '无意义'} "
+                f"(条件: 中文>={4} 或 英文>={10})"
+            )
+            return is_meaningful
+        elif has_chinese:
+            # 情况1：纯中文
+            is_meaningful = chinese_chars >= 4
+            _logger.debug(
+                f"📊 纯中文文本判断: {chinese_chars}个字符, "
+                f"结果: {'有意义' if is_meaningful else '无意义'} (需要>={4})"
+            )
+            return is_meaningful
+        elif has_english:
+            # 情况2：纯英文
+            is_meaningful = english_chars >= 10
+            _logger.debug(
+                f"📊 纯英文文本判断: {english_chars}个字符, "
+                f"结果: {'有意义' if is_meaningful else '无意义'} (需要>={10})"
+            )
+            return is_meaningful
+        else:
+            # 既没有中文也没有英文（可能是数字、标点等）
             return False
     
     def _get_response_duration(self, response) -> float:
@@ -2289,8 +2495,6 @@ class AudioStreamReader:
             _logger.info("💡 请说话测试VAD功能")
 
             # 主循环：显示队列状态
-            last_csv_reload_time = time.time()  # 记录上次CSV重载时间
-            
             while True:
                 time.sleep(2)  # 每2秒显示一次状态
                 
@@ -2317,21 +2521,6 @@ class AudioStreamReader:
                     self.dialog_ai_url = dialog_ai_url
                     _logger.info(f"dialog_ai_url: {self.dialog_ai_url}")
                 #  hmi.speaker_volume
-                speaker_volume = get_para_value("hmi.speaker_volume")
-                if speaker_volume is not None:
-                    volume = float(speaker_volume)/100.0
-                    self.tts_data.set_volume(volume)
-                
-                # CSV配置热加载（每60秒）
-                current_time = time.time()
-                if current_time - last_csv_reload_time > 60:
-                    try:
-                        _logger.info("🔄 开始重新加载CSV配置...")
-                        self.text_processor.reload_configs()
-                        last_csv_reload_time = current_time
-                        _logger.info("✅ CSV配置重新加载完成")
-                    except Exception as e:
-                        _logger.error(f"❌ 重新加载CSV配置失败: {e}")
 
                 status = self.get_queue_status()
                 # _logger.info(f"📊 队列状态: VAD队列={status['vad_queue_size']}, "

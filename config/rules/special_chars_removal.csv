@@ -14,3 +14,6 @@ char_id,character,enabled,description
 13,\,TRUE,反斜杠
 14,【,TRUE,左中文方括号
 15,】,TRUE,右中文方括号
+16,：,TRUE,全角冒号（中文冒号）
+17,:,TRUE,半角冒号（英文冒号）
+18,-,TRUE,连字符（只移除3个及以上连续的连字符，如---、----、-----）

@@ -5,7 +5,7 @@
 # @Date: 2021/1/15
 # @Describe:
 
-from pymodbus.client import ModbusTcpClient, ModbusSerialClient
+from pymodbus.client.sync import ModbusTcpClient, ModbusSerialClient
 from pymodbus.constants import Endian
 from pymodbus.payload import BinaryPayloadDecoder, BinaryPayloadBuilder
 import time
@@ -106,7 +106,7 @@ class SRModbusSdk:
         :param value: 取值: bool
         :return:
         """
-        builder = BinaryPayloadBuilder(byteorder=Endian.BIG)
+        builder = BinaryPayloadBuilder(byteorder=Endian.Big)
         if value:
             builder.add_16bit_uint(0xFF00)
             self._client.write_coil(address, builder.to_coils(), slave=17)
@@ -359,8 +359,8 @@ class SRModbusSdk:
         :return:
         """
         ret = self._client.read_input_registers(address, count=register_num, slave=17)
-        decoder = BinaryPayloadDecoder.fromRegisters(ret.registers, byteorder=Endian.BIG,
-                                                     wordorder=Endian.BIG)
+        decoder = BinaryPayloadDecoder.fromRegisters(ret.registers, byteorder=Endian.Big,
+                                                     wordorder=Endian.Big)
         return decoder
 
     def read_holding_registers_function(self, address, register_num):
@@ -371,8 +371,8 @@ class SRModbusSdk:
         :return:
         """
         ret = self._client.read_holding_registers(address, count=register_num, slave=17)
-        decoder = BinaryPayloadDecoder.fromRegisters(ret.registers, byteorder=Endian.BIG,
-                                                     wordorder=Endian.BIG)
+        decoder = BinaryPayloadDecoder.fromRegisters(ret.registers, byteorder=Endian.Big,
+                                                     wordorder=Endian.Big)
         return decoder
     
     def get_cur_system_state(self) -> SystemState:
@@ -581,7 +581,7 @@ class SRModbusSdk:
         :param angle: 孤度 单位(1/1000)rad
         :return:
         """
-        builder = BinaryPayloadBuilder(byteorder=Endian.BIG)
+        builder = BinaryPayloadBuilder(byteorder=Endian.Big)
         builder.add_32bit_int(x)
         builder.add_32bit_int(y)
         builder.add_32bit_int(angle)
@@ -593,7 +593,7 @@ class SRModbusSdk:
         :param station: 站点
         :return:
         """
-        builder = BinaryPayloadBuilder(byteorder=Endian.BIG)
+        builder = BinaryPayloadBuilder(byteorder=Endian.Big)
         builder.add_16bit_uint(station)
         self._client.write_registers(40007, builder.to_registers(), slave=17)
 
@@ -606,7 +606,7 @@ class SRModbusSdk:
         :param yaw_speed: w角速度 单位(1/1000)rad/s
         :return:
         """
-        builder = BinaryPayloadBuilder(byteorder=Endian.BIG)
+        builder = BinaryPayloadBuilder(byteorder=Endian.Big)
         builder.add_16bit_int(x_speed)
         builder.add_16bit_int(y_speed)
         builder.add_16bit_int(yaw_speed)
@@ -618,7 +618,7 @@ class SRModbusSdk:
         :param speed_level: 速度级别: [0,100]
         :return:
         """
-        builder = BinaryPayloadBuilder(byteorder=Endian.BIG)
+        builder = BinaryPayloadBuilder(byteorder=Endian.Big)
         builder.add_16bit_uint(speed_level)
         self._client.write_registers(40026, builder.to_registers(), slave=17)
 
@@ -628,7 +628,7 @@ class SRModbusSdk:
         :param volume: 扬声器音量: [0,100]
         :return:
         """
-        builder = BinaryPayloadBuilder(byteorder=Endian.BIG)
+        builder = BinaryPayloadBuilder(byteorder=Endian.Big)
         builder.add_16bit_uint(volume)
         self._client.write_registers(40028, builder.to_registers(), slave=17)
 
@@ -643,7 +643,7 @@ class SRModbusSdk:
         """
         if self.get_cur_locate_state() == LocationState.LOCATION_STATE_RUNNING:
             self.cancel_locate_task()
-        builder = BinaryPayloadBuilder(byteorder=Endian.BIG)
+        builder = BinaryPayloadBuilder(byteorder=Endian.Big)
         data = 0
         map_code = bytes(map_name, 'utf-8')
         if len(map_code) >= 2:
@@ -662,7 +662,7 @@ class SRModbusSdk:
         :param mask: GPIO output的掩码
         :return:
         """
-        builder = BinaryPayloadBuilder(byteorder=Endian.BIG)
+        builder = BinaryPayloadBuilder(byteorder=Endian.Big)
         builder.add_16bit_uint(value)
         builder.add_16bit_uint(mask)
         self._client.write_registers(40030, builder.to_registers(), slave=17)
@@ -673,7 +673,7 @@ class SRModbusSdk:
         :param mission_registers: 寄存器实例对象
         :return:
         """
-        builder = BinaryPayloadBuilder(byteorder=Endian.BIG)
+        builder = BinaryPayloadBuilder(byteorder=Endian.Big)
         builder.add_16bit_uint(mission_registers.register0)
         builder.add_16bit_uint(mission_registers.register1)
         builder.add_16bit_uint(mission_registers.register2)
@@ -692,7 +692,7 @@ class SRModbusSdk:
         :param angle: 孤度 单位(1/1000)rad
         :return:
         """
-        builder = BinaryPayloadBuilder(byteorder=Endian.BIG)
+        builder = BinaryPayloadBuilder(byteorder=Endian.Big)
         builder.add_32bit_int(x)
         builder.add_32bit_int(y)
         builder.add_32bit_int(angle)
@@ -707,7 +707,7 @@ class SRModbusSdk:
         :param no: 任务编号
         :return:
         """
-        builder = BinaryPayloadBuilder(byteorder=Endian.BIG)
+        builder = BinaryPayloadBuilder(byteorder=Endian.Big)
         builder.add_32bit_int(no)
         builder.add_32bit_int(x)
         builder.add_32bit_int(y)
@@ -722,7 +722,7 @@ class SRModbusSdk:
         :param no: 任务编号
         :return:
         """
-        builder = BinaryPayloadBuilder(byteorder=Endian.BIG)
+        builder = BinaryPayloadBuilder(byteorder=Endian.Big)
         builder.add_32bit_int(no)
         builder.add_16bit_uint(station_id)
         self._client.write_registers(40066, builder.to_registers(), slave=17)
@@ -736,7 +736,7 @@ class SRModbusSdk:
         :param no: 任务编号
         :return:
         """
-        builder = BinaryPayloadBuilder(byteorder=Endian.BIG)
+        builder = BinaryPayloadBuilder(byteorder=Endian.Big)
         builder.add_32bit_int(no)
         builder.add_32bit_int(action_id)
         builder.add_32bit_int(param1)
@@ -749,7 +749,7 @@ class SRModbusSdk:
         :param mission_id: mission任务id
         :return:
         """
-        builder = BinaryPayloadBuilder(byteorder=Endian.BIG)
+        builder = BinaryPayloadBuilder(byteorder=Endian.Big)
         builder.add_32bit_uint(mission_id)
         self._client.write_registers(40097, builder.to_registers(), slave=17)
 

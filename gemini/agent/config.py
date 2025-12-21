@@ -7,13 +7,18 @@ import os
 
 # ============ Gemini API 配置 ============
 # 从环境变量读取，如果没有则使用默认值
-GEMINI_API_KEY = os.getenv('GEMINI_API_KEY', 'AIzaSyBsVICVIK7cs9-zaX7FoqmK4Qykg4AKw7g')
+GEMINI_API_KEY = os.getenv('GEMINI_API_KEY', 'AIzaSyB72lYFYap_YMphwlLIi9etJS2XQmGfYwU')
 GEMINI_MODEL = os.getenv('GEMINI_MODEL', 'gemini-2.0-flash')
 
 # ============ Modbus 配置 ============
-# AGV 设备的 IP 地址和端口
-MODBUS_HOST = os.getenv('MODBUS_HOST', '10.10.71.58')
-MODBUS_PORT = int(os.getenv('MODBUS_PORT', '502'))
+# AGV 设备通过 SSH 端口转发访问
+# 前提：需要先建立 SSH 隧道: ssh -f -N -L 1502:localhost:502 -P2222 root@10.10.70.218
+# 注意：使用 1502 而不是 502，因为 502 是特权端口需要 root 权限
+# 配置说明：
+#   - MODBUS_HOST: 使用 localhost（通过 SSH 隧道访问）
+#   - MODBUS_PORT: 使用 1502（本地转发端口，SSH 会自动转发到车辆的 502 端口）
+MODBUS_HOST = os.getenv('MODBUS_HOST', 'localhost')
+MODBUS_PORT = int(os.getenv('MODBUS_PORT', '1502'))
 
 # ============ AI 提示词配置 ============
 PROMPT = """你在控制一台AMR机器人，你是一个全能型机器人控制大脑，旨在控制机器人执行移动任务，执行动作任务，以及获取机器人状态信息。你拥有各种工具，可以高效地完成复杂的请求。\

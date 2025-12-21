@@ -1,6 +1,6 @@
 # Copyright 2025 Standard Robots Co. All rights reserved.
 
-from dialog.dialog_recognize import AudioStreamReader
+from dialog.dialog_recognize import AudioStreamReader, get_para_value
 from tts.audio_player import (
     AudioPlayer,
     SystemStateManager,
@@ -31,16 +31,21 @@ sys.path.insert(0, str(project_root))
 # 导入统一的日志配置
 
 # 导入 Gemini Agent
-try:
-    from gemini.agent.gemini_agent import GeminiAgent
-    GEMINI_AVAILABLE = True
-    _logger = logging.getLogger(__name__)
-    _logger.info("✅ Gemini Agent 模块导入成功")
-except ImportError as e:
-    GEMINI_AVAILABLE = False
-    _logger = logging.getLogger(__name__)
-    _logger.warning(f"⚠️ 无法导入 Gemini Agent: {e}")
-    _logger.warning("将使用本地测试回复")
+# 临时关闭 Gemini 对话服务
+GEMINI_AVAILABLE = False
+_logger = logging.getLogger(__name__)
+_logger.warning("⚠️ Gemini 对话服务已临时关闭，将使用本地测试回复")
+
+# try:
+#     from gemini.agent.gemini_agent import GeminiAgent
+#     GEMINI_AVAILABLE = True
+#     _logger = logging.getLogger(__name__)
+#     _logger.info("✅ Gemini Agent 模块导入成功")
+# except ImportError as e:
+#     GEMINI_AVAILABLE = False
+#     _logger = logging.getLogger(__name__)
+#     _logger.warning(f"⚠️ 无法导入 Gemini Agent: {e}")
+#     _logger.warning("将使用本地测试回复")
 
 _logger = logging.getLogger(__name__)
 
@@ -155,6 +160,79 @@ async def lifespan(app: FastAPI):
     _logger.info('  - 播放文本: /play?music_text=你好世界&status_command=play_text')
     _logger.info('  - 查看状态: /status')
 
+    # 显示音频设备信息
+    try:
+        import sounddevice as sd
+        
+        # 麦克风设备信息
+        try:
+            from dov_device_finder import get_audio_device_id, is_target_usb_connected, TARGET_VID, TARGET_PID
+            mic_connected = is_target_usb_connected()
+            mic_id = get_audio_device_id()
+            devices = sd.query_devices()
+            if mic_id < len(devices):
+                mic_device = devices[mic_id]
+                _logger.info('🎤 麦克风设备信息:')
+                _logger.info(f'   VID/PID: {TARGET_VID}:{TARGET_PID} ({"已连接" if mic_connected else "未连接"})')
+                _logger.info(f'   设备ID: {mic_id}')
+                _logger.info(f'   设备名称: {mic_device.get("name", "unknown")}')
+                _logger.info(f'   输入通道数: {mic_device.get("max_input_channels", 0)}')
+                _logger.info(f'   采样率: {mic_device.get("default_samplerate", 0)} Hz')
+                # 获取输入音量
+                try:
+                    result = subprocess.run(['amixer', 'get', 'Capture'], capture_output=True, text=True, timeout=2)
+                    if result.returncode == 0:
+                        for line in result.stdout.split('\n'):
+                            if '[' in line and '%' in line:
+                                _logger.info(f'   输入音量: {line.strip()}')
+                                break
+                except:
+                    pass
+        except Exception as e:
+            _logger.warning(f'获取麦克风信息失败: {e}')
+        
+        # 扬声器设备信息
+        try:
+            default_output = sd.query_devices(kind='output')
+            if default_output:
+                _logger.info('🔊 扬声器设备信息:')
+                _logger.info(f'   设备ID: {default_output["index"]}')
+                _logger.info(f'   设备名称: {default_output.get("name", "unknown")}')
+                _logger.info(f'   输出通道数: {default_output.get("max_output_channels", 0)}')
+                _logger.info(f'   采样率: {default_output.get("default_samplerate", 0)} Hz')
+                # 获取输出音量
+                try:
+                    result = subprocess.run(['amixer', 'get', "'DAC VOLUME'"], capture_output=True, text=True, timeout=2)
+                    if result.returncode == 0:
+                        for line in result.stdout.split('\n'):
+                            if '[' in line and '%' in line:
+                                _logger.info(f'   输出音量: {line.strip()}')
+                                break
+                except:
+                    pass
+                # 获取USB设备VID/PID（如果是USB音频设备）
+                try:
+                    result = subprocess.run(['aplay', '-l'], capture_output=True, text=True, timeout=2)
+                    if result.returncode == 0 and 'USB' in result.stdout:
+                        usb_result = subprocess.run(['lsusb'], capture_output=True, text=True, timeout=2)
+                        if usb_result.returncode == 0:
+                            for line in usb_result.stdout.split('\n'):
+                                if 'Audio' in line or 'audio' in line:
+                                    parts = line.split()
+                                    if len(parts) > 5:
+                                        vid_pid = parts[5]
+                                        _logger.info(f'   USB VID/PID: {vid_pid}')
+                                        break
+                except:
+                    pass
+        except Exception as e:
+            _logger.warning(f'获取扬声器信息失败: {e}')
+    except Exception as e:
+        _logger.warning(f'获取音频设备信息失败: {e}')
+
+    add_startup_reminder()
+    _logger.info('✅ 已添加启动语音提醒')
+
     yield
 
     # 关闭时的清理
@@ -186,6 +264,41 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title='语音播放服务', description='通过API控制语音文件播放', lifespan=lifespan)
 
 
+def add_startup_reminder():
+    """添加启动语音提醒 - 使用播放队列系统（replace模式）"""
+    try:
+        audio_file = str(Path(project_root) / "music" / "语音服务已启动功能已开启.wav")
+        if not Path(audio_file).exists():
+            _logger.warning(f'⚠️ 启动语音文件不存在: {audio_file}')
+            return
+        
+        # 从数据库读取音量配置（参考 dialog_recognize.py:2530-2533）
+        speaker_volume = get_para_value("hmi.speaker_volume")
+        if speaker_volume is not None:
+            volume = float(speaker_volume) / 100.0
+        else:
+            volume = 0.75  # 默认音量
+        
+        # 创建播放任务（参考 play_conversation 的方式）
+        startup_task = PlayTask(
+            file_path=audio_file,
+            music_text='',
+            play_interval=0,
+            play_count=1,
+            priority=0,  # 最高优先级
+            volume=volume,
+            created_time=time.time(),
+        )
+        startup_task.status_command = StatusCommand.PLAY_MUSIC
+        startup_task.duration = audio_player.get_audio_file_duration(audio_file)
+        
+        # 使用 replace_queue_sync 清空队列并添加任务（自动停止当前播放）
+        audio_player.replace_queue_sync(startup_task)
+        _logger.info(f'✅ 启动语音提醒已添加到播放队列: {audio_file}')
+    except Exception as e:
+        _logger.error(f'❌ 添加启动语音提醒失败: {e}')
+
+
 @app.post('/start_button_conversation')
 async def start_button_conversation():
     conversation_reader.start_button_conversation()
@@ -202,6 +315,13 @@ async def stop_button_conversation():
 async def get_conversation_playing_status():
     
     return {'status': 'success', 'message': '对话播放状态', 'is_playing_now': state_manager.is_playing_now, 'last_play_end_time': state_manager.last_play_end_time}
+
+
+@app.get('/get_music_playing_status')
+async def get_music_playing_status():
+    """获取音乐播放状态，并播放启动提醒"""
+    add_startup_reminder()
+    return {'status': 'success', 'message': '音乐播放状态', 'is_playing': audio_player.is_playing}
 
 
 @app.post('/play')
@@ -488,34 +608,36 @@ async def local_chat(request_data: dict):
         user_input = request_data.get("query", "")
         _logger.info(f'📥 收到本地对话请求: {user_input}')
         
-        # 如果 Gemini Agent 可用，优先使用它处理请求
-        if gemini_agent is not None:
-            try:
-                _logger.info(f'🤖 调用 Gemini Agent 处理: {user_input}')
-                
-                # 创建回调函数，用于记录函数调用过程
-                def log_callback(message: str):
-                    _logger.info(f'🔧 Function Call: {message}')
-                
-                # 调用 Gemini Agent
-                ai_response = gemini_agent.send_message(user_input, callback=log_callback)
-                _logger.info(f'✅ Gemini 回复: {ai_response}')
-                
-                # 返回原API期望的字符串格式
-                return f"resultCode=200,resultMsg={ai_response}"
-                
-            except Exception as e:
-                _logger.error(f'❌ Gemini Agent 处理失败: {e}', exc_info=True)
-                # 降级到测试回复
-                reply_msg = "AI服务暂时不可用，请稍后再试"
-        else:
+        # Gemini 对话服务已临时关闭，使用测试回复
+        # if gemini_agent is not None:
+        #     try:
+        #         _logger.info(f'🤖 调用 Gemini Agent 处理: {user_input}')
+        #         
+        #         # 创建回调函数，用于记录函数调用过程
+        #         def log_callback(message: str):
+        #             _logger.info(f'🔧 Function Call: {message}')
+        #         
+        #         # 调用 Gemini Agent
+        #         ai_response = gemini_agent.send_message(user_input, callback=log_callback)
+        #         _logger.info(f'✅ Gemini 回复: {ai_response}')
+        #         
+        #         # 返回原API期望的字符串格式
+        #         return f"resultCode=200,resultMsg={ai_response}"
+        #         
+        #     except Exception as e:
+        #         _logger.error(f'❌ Gemini Agent 处理失败: {e}', exc_info=True)
+        #         # 降级到测试回复
+        #         reply_msg = "AI服务暂时不可用，请稍后再试"
+        
+        # 使用测试回复（Gemini 已关闭）
+        if True:
             # Gemini Agent 不可用，使用测试回复
             _logger.warning('⚠️ Gemini Agent 不可用，使用测试回复')
             time.sleep(2)
             # 自定义回复规则 - 可以根据关键词匹配返回不同回复
             custom_replies = {
-                "你好": "【步骤1特殊字符移除测试】车辆编号是1307，距#离为3.14159米，车辆编号为1307的AGV当前电池电压为 **26.5V**。根据提供的信息，车辆编号为1307的AGV电池温度为 **32.0I**。根据提供的信息，车辆编号为1307的AGV电池温度为 **32.0℃**。根据提供的信息，车辆编号为一 三  零 七的 A G V 电池温度为 32.0。AGV电/池85.5%，任务*完成，我们_了解到，**利用率**为96.52%。",
-                "天气": "抱歉，我无法查询天气信息。",
+                "车辆人物是多少": "【步骤1特殊字符移除测试】车辆编号是1307，距#离为3.14159米，车辆编号为1307的AGV当前电池电压为 **26.5V**。根据提供的信息，车辆编号为1307的AGV电池温度为 **32.0I**。根据提供的信息，车辆编号为1307的AGV电池温度为 **32.0℃**。根据提供的信息，车辆编号为一 三  零 七的 A G V 电池温度为 32.0。AGV电/池85.5%，任务*完成，我们_了解到，**利用率**为96.52%。",
+                "车辆完成率是多少": "抱歉，我无法查询天气信息。",
                 "时间": f"现在是{time.strftime('%H点%M分')}。",
                 "名字": "我叫小德，是一个智能助手。",
                 # 在这里添加更多自定义回复规则

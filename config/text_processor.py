@@ -208,6 +208,10 @@ class TextProcessor:
         
         从 config/rules/special_chars_removal.csv 读取要移除的字符
         
+        特殊处理：
+        - 连字符（-）：只移除3个及以上连续的连字符（如 ---、----、-----）
+        - 其他字符：移除所有出现
+        
         参数:
             text: 原始文本
         
@@ -223,9 +227,19 @@ class TextProcessor:
         for rule in self.special_chars_rules:
             char = rule.get('character', '')
             if char:
-                result = result.replace(char, '')
-                if char in text:
-                    _logger.debug(f"🗑️ 移除特殊字符: '{char}'")
+                # 特殊处理：连字符只移除3个及以上的连续连字符
+                if char == '-':
+                    # 使用正则表达式匹配3个及以上连续的连字符
+                    pattern = r'-{3,}'  # 匹配3个或更多连续的连字符
+                    new_result = re.sub(pattern, '', result)
+                    if new_result != result:
+                        _logger.debug(f"🗑️ 移除连续连字符（≥3个）")
+                        result = new_result
+                else:
+                    # 其他字符：移除所有出现
+                    result = result.replace(char, '')
+                    if char in text:
+                        _logger.debug(f"🗑️ 移除特殊字符: '{char}'")
         
         return result
     

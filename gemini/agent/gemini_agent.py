@@ -3,20 +3,64 @@ import sys
 import json
 import logging
 from pathlib import Path
-from google import genai
-from google.genai import types
 from typing import Any
 
-# 添加项目根目录到 Python 路径，以便导入 log_config
-project_root = Path(__file__).parent.parent.parent
-sys.path.insert(0, str(project_root))
+# 添加项目根目录到 Python 路径，以便导入 log_config（必须在导入其他模块之前）
+# 使用绝对路径解析，确保正确找到项目根目录
+if __file__:
+    project_root = Path(__file__).resolve().parent.parent.parent
+else:
+    # 如果 __file__ 不存在（某些特殊环境），从当前目录向上查找
+    project_root = Path.cwd()
+    while project_root.name != 'text_to_speech' and project_root.parent != project_root:
+        project_root = project_root.parent
+
+# 只在项目根目录不在路径中时才添加（避免重复添加）
+if str(project_root) not in sys.path:
+    sys.path.insert(0, str(project_root))
 
 # 导入统一的日志配置
 import log_config
 
+# 现在可以导入 google.genai（在路径设置之后）
+# 确保 google 包从 site-packages 导入，而不是从项目目录
+# 通过临时移除项目根目录，导入后再恢复，确保找到正确的 google 包
+_project_root_in_path = str(project_root) in sys.path
+if _project_root_in_path:
+    sys.path.remove(str(project_root))
+
+try:
+    from google import genai
+    from google.genai import types
+finally:
+    # 恢复项目根目录到路径中（如果需要）
+    if _project_root_in_path and str(project_root) not in sys.path:
+        sys.path.insert(0, str(project_root))
+
 # 导入本地模块
-from .modbus_ai_cmd import ModbusAICmd
-from .config import PROMPT, GEMINI_API_KEY, GEMINI_MODEL
+try:
+    from .modbus_ai_cmd import ModbusAICmd
+    from .config import PROMPT, GEMINI_API_KEY, GEMINI_MODEL
+except ImportError:
+    # 如果作为独立模块运行（直接导入），需要从当前目录导入
+    import importlib.util
+    import os
+    
+    # 导入 modbus_ai_cmd
+    modbus_path = os.path.join(os.path.dirname(__file__), 'modbus_ai_cmd.py')
+    spec = importlib.util.spec_from_file_location("modbus_ai_cmd", modbus_path)
+    modbus_module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(modbus_module)
+    ModbusAICmd = modbus_module.ModbusAICmd
+    
+    # 导入 config
+    config_path = os.path.join(os.path.dirname(__file__), 'config.py')
+    spec = importlib.util.spec_from_file_location("agent_config", config_path)
+    config_module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(config_module)
+    PROMPT = config_module.PROMPT
+    GEMINI_API_KEY = config_module.GEMINI_API_KEY
+    GEMINI_MODEL = config_module.GEMINI_MODEL
 
 # 获取日志记录器（使用统一的日志系统）
 logger = logging.getLogger(__name__)
@@ -173,6 +217,17 @@ class GeminiAgent:
         Raises:
             Exception: 当AI处理或函数调用出现错误时抛出
         """
+        # 临时清除可能导致地理位置检测问题的代理环境变量
+        # 确保API调用使用服务器本地的网络环境，不受客户端IP影响
+        proxy_vars = ['ALL_PROXY', 'all_proxy', 'HTTP_PROXY', 'http_proxy', 
+                     'HTTPS_PROXY', 'https_proxy', 'SOCKS_PROXY', 'socks_proxy']
+        original_proxies = {}
+        for var in proxy_vars:
+            if var in os.environ:
+                original_proxies[var] = os.environ[var]
+                # 清除所有代理设置，确保使用服务器本地网络
+                del os.environ[var]
+        
         try:
             logger.info(f"发送消息给AI: {message}")
             response = self.chat.send_message(message)
@@ -198,8 +253,19 @@ class GeminiAgent:
                         result = method(**arg_dict)
                         logger.info(f"函数执行结果: {result}")
                         
-                        # 将执行结果发送回AI
-                        response = self.chat.send_message(result)
+                        # 将执行结果发送回AI（也需要清除代理）
+                        # 临时清除代理环境变量
+                        _original_proxies_func = {}
+                        for var in proxy_vars:
+                            if var in os.environ:
+                                _original_proxies_func[var] = os.environ[var]
+                                del os.environ[var]
+                        try:
+                            response = self.chat.send_message(result)
+                        finally:
+                            # 恢复代理设置
+                            for var, value in _original_proxies_func.items():
+                                os.environ[var] = value
                         
                     except Exception as e:
                         error_msg = f"执行函数 {fn.name} 时出错: {str(e)}"
@@ -210,15 +276,32 @@ class GeminiAgent:
             
         except Exception as e:
             # 重新创建聊天会话（使用配置的模型）
+            # 清除代理环境变量，确保使用服务器本地网络
+            _reset_proxy_vars = ['ALL_PROXY', 'all_proxy', 'HTTP_PROXY', 'http_proxy', 
+                                'HTTPS_PROXY', 'https_proxy', 'SOCKS_PROXY', 'socks_proxy']
+            _reset_original_proxies = {}
+            for var in _reset_proxy_vars:
+                if var in os.environ:
+                    _reset_original_proxies[var] = os.environ[var]
+                    del os.environ[var]
+            
             try:
                 self.chat = self.client.chats.create(model=self.model, config=self.config)
                 logger.warning("⚠️ 聊天会话已重新创建")
             except Exception as reset_error:
                 logger.error(f"❌ 重新创建聊天会话失败: {reset_error}")
+            finally:
+                # 恢复代理设置
+                for var, value in _reset_original_proxies.items():
+                    os.environ[var] = value
             
             error_msg = f"AI处理消息时出错: {str(e)}"
             logger.error(error_msg, exc_info=True)
             return f"抱歉，处理您的请求时出现了问题，请重新说一遍"
+        finally:
+            # 恢复原始代理设置
+            for var, value in original_proxies.items():
+                os.environ[var] = value
 # modbus_ai_cmd.is_working = True
 # print("开始执行指令", modbus_ai_cmd.is_working)
 # input_prompt = "请输入指令："
